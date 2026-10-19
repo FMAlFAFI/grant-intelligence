@@ -1,2 +1,9 @@
-# Model Name, Commit Hash, Source
-Qwen/Qwen3-Embedding-0.6B, [Insert_Commit_Hash_Here], HuggingFace
+{
+    "embedding_model": {
+        "model_id": "Qwen/Qwen3-Embedding-0.6B",
+        "commit_hash": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "embedding_dimension": 1024,
+        "locked_at_utc": "2026-10-19T22:38:13.150753+00:00",
+        "locked_by": "Fahad"
+    }
+}
