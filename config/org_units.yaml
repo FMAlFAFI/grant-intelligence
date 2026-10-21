@@ -1,0 +1,26 @@
+version: 1
+colleges:
+  - name_en: College of Criminal Justice
+    name_ar: كلية العدالة الجنائية
+    departments:
+      - {name_en: Department of Criminal Justice, name_ar: قسم العدالة الجنائية}
+      - {name_en: Department of Security Studies, name_ar: قسم الدراسات الأمنية}
+  - name_en: College of Computer and Information Security
+    name_ar: كلية الحاسب وأمن المعلومات
+    departments:
+      - {name_en: Department of Information Security, name_ar: قسم أمن المعلومات}
+      - {name_en: Department of Data Science, name_ar: قسم علوم البيانات}
+  - name_en: College of Forensic Sciences
+    name_ar: كلية علوم الأدلة الجنائية
+    departments:
+      - {name_en: Department of Forensic Sciences, name_ar: قسم علوم الأدلة الجنائية}
+      - {name_en: Department of Toxicology, name_ar: قسم علم السموم}
+  - name_en: College of Strategic Sciences
+    name_ar: كلية العلوم الاستراتيجية
+    departments:
+      - {name_en: Department of Strategic Studies, name_ar: قسم الدراسات الاستراتيجية}
+      - {name_en: Department of Social Sciences, name_ar: قسم العلوم الاجتماعية}
+project_types:
+  - {name_en: small, name_ar: صغير}
+  - {name_en: medium, name_ar: متوسط}
+  - {name_en: large, name_ar: كبير}

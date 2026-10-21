@@ -19,5 +19,6 @@ models/*
 
 # Environment
 .env
-# Local datasets (synthetic + real) stay out of git
-data/
+
+# Run outputs
+results/
