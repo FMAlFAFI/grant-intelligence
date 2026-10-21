@@ -1,3 +1,4 @@
+import json
 import zlib
 
 import numpy as np
@@ -59,12 +60,15 @@ def test_proposal_text_skips_empty_fields():
     assert proposal_text({"title": "A title", "keywords": "", "abstract": "Some abstract"}) == "A title. Some abstract"
 
 
-def test_lock_without_hash_refuses_to_load(tmp_path):
+def test_lock_reads_the_json_entry_for_the_model(tmp_path):
     lock = tmp_path / "models.lock"
-    lock.write_text("# Model Name, Commit Hash, Source\nintfloat/multilingual-e5-small, [Insert_Commit_Hash_Here], HuggingFace\n")
+    lock.write_text(json.dumps({"embedding_model": {"model_id": "Qwen/Qwen3-Embedding-0.6B", "commit_hash": "qwen"}}))
     with pytest.raises(ModelNotLocked):
         read_lock(lock_path=lock)
-    lock.write_text("intfloat/multilingual-e5-small, abc123, HuggingFace\n")
+    lock.write_text(json.dumps({
+        "embedding_model": {"model_id": "Qwen/Qwen3-Embedding-0.6B", "commit_hash": "qwen"},
+        "priority_classifier_model": {"model_id": "intfloat/multilingual-e5-small", "commit_hash": "abc123"},
+    }))
     assert read_lock(lock_path=lock) == "abc123"
 
 

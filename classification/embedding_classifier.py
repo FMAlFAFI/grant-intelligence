@@ -1,7 +1,9 @@
 import argparse
 import hashlib
+import json
 import logging
 import random
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -15,7 +17,7 @@ MODEL_NAME = "intfloat/multilingual-e5-small"
 LOCK_PATH = ROOT / "models.lock"
 CACHE_DIR = ROOT / "cache" / "embeddings"
 MODEL_DIR = ROOT / "models"
-PLACEHOLDER = "[Insert_Commit_Hash_Here]"
+LOCK_KEY = "priority_classifier_model"
 SEED = 42
 
 
@@ -23,35 +25,40 @@ class ModelNotLocked(RuntimeError):
     pass
 
 
+def _load_lock(lock_path):
+    path = Path(lock_path)
+    if not path.exists():
+        return {}
+    text = path.read_text(encoding="utf-8").strip()
+    return json.loads(text) if text else {}
+
+
 def read_lock(model_name=MODEL_NAME, lock_path=LOCK_PATH):
     if not Path(lock_path).exists():
         raise ModelNotLocked(f"{lock_path} not found")
-    for line in Path(lock_path).read_text(encoding="utf-8").splitlines():
-        parts = [part.strip() for part in line.split(",")]
-        if parts and parts[0] == model_name:
-            if len(parts) < 2 or not parts[1] or parts[1] == PLACEHOLDER:
-                break
-            return parts[1]
+    for entry in _load_lock(lock_path).values():
+        if isinstance(entry, dict) and entry.get("model_id") == model_name and entry.get("commit_hash"):
+            return entry["commit_hash"]
     raise ModelNotLocked(
         f"No commit hash for {model_name} in {lock_path}. Run: python -m classification.embedding_classifier lock"
     )
 
 
-def write_lock(model_name=MODEL_NAME, lock_path=LOCK_PATH):
+def write_lock(model_name=MODEL_NAME, lock_path=LOCK_PATH, locked_by=""):
     from huggingface_hub import HfApi
 
     revision = HfApi().model_info(model_name).sha
-    path = Path(lock_path)
-    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else ["# Model Name, Commit Hash, Source"]
-    row = f"{model_name}, {revision}, HuggingFace"
-    replaced = False
-    for index, line in enumerate(lines):
-        if line.split(",")[0].strip() == model_name:
-            lines[index] = row
-            replaced = True
-    if not replaced:
-        lines.append(row)
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    data = _load_lock(lock_path)
+    entry = data.get(LOCK_KEY, {})
+    entry.update({
+        "model_id": model_name,
+        "commit_hash": revision,
+        "embedding_dimension": 384,
+        "locked_at_utc": datetime.now(timezone.utc).isoformat(),
+        "locked_by": locked_by or entry.get("locked_by", ""),
+    })
+    data[LOCK_KEY] = entry
+    Path(lock_path).write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
     logger.info("Locked %s at %s", model_name, revision)
     return revision
 
@@ -197,10 +204,11 @@ def classify_folder(proposals_dir, priorities=None, encoder=None, prototypes=Non
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Embedding model helpers.")
     parser.add_argument("command", choices=["lock"])
+    parser.add_argument("--by", default="")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     if args.command == "lock":
-        write_lock()
+        write_lock(locked_by=args.by)
 
 
 if __name__ == "__main__":
