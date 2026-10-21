@@ -60,22 +60,27 @@ def test_proposal_text_skips_empty_fields():
     assert proposal_text({"title": "A title", "keywords": "", "abstract": "Some abstract"}) == "A title. Some abstract"
 
 
-def test_lock_reads_the_json_entry_for_the_model(tmp_path):
+def test_lock_reads_the_team_model_from_models_lock(tmp_path):
     lock = tmp_path / "models.lock"
-    lock.write_text(json.dumps({"embedding_model": {"model_id": "Qwen/Qwen3-Embedding-0.6B", "commit_hash": "qwen"}}))
+    lock.write_text(json.dumps({"other_model": {"model_id": "x/y", "commit_hash": "zzz"}}))
     with pytest.raises(ModelNotLocked):
         read_lock(lock_path=lock)
     lock.write_text(json.dumps({
-        "embedding_model": {"model_id": "Qwen/Qwen3-Embedding-0.6B", "commit_hash": "qwen"},
-        "priority_classifier_model": {"model_id": "intfloat/multilingual-e5-small", "commit_hash": "abc123"},
+        "embedding_model": {"model_id": "Qwen/Qwen3-Embedding-0.6B", "commit_hash": "abc123", "embedding_dimension": 1024},
     }))
-    assert read_lock(lock_path=lock) == "abc123"
+    assert read_lock(lock_path=lock) == ("Qwen/Qwen3-Embedding-0.6B", "abc123")
+
+
+def test_repo_lock_pins_qwen():
+    model_id, revision = read_lock()
+    assert model_id == "Qwen/Qwen3-Embedding-0.6B"
+    assert len(revision) == 40
 
 
 def test_cache_round_trip(tmp_path):
-    cache = EmbeddingCache("intfloat/multilingual-e5-small", "abc123def456", cache_dir=tmp_path)
+    cache = EmbeddingCache("Qwen/Qwen3-Embedding-0.6B", "abc123def456", cache_dir=tmp_path)
     cache.put("query: hello", np.ones(3, dtype=np.float32))
     cache.save()
-    again = EmbeddingCache("intfloat/multilingual-e5-small", "abc123def456", cache_dir=tmp_path)
+    again = EmbeddingCache("Qwen/Qwen3-Embedding-0.6B", "abc123def456", cache_dir=tmp_path)
     assert np.array_equal(again.get("query: hello"), np.ones(3, dtype=np.float32))
     assert again.get("query: other") is None
