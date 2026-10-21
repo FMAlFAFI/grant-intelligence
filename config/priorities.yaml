@@ -1,0 +1,160 @@
+version: 1
+priorities:
+  - code: P1
+    name_en: National Security
+    name_ar: الأمن الوطني
+    description_en: "Research on protecting the state, its institutions, public order and critical facilities from threats, and on the readiness of security agencies."
+    description_ar: "بحوث حماية الدولة ومؤسساتها والنظام العام والمرافق الحيوية من التهديدات، وجاهزية الأجهزة الأمنية."
+    keywords_en:
+      - national security
+      - critical infrastructure
+      - extremism
+      - radicalization
+      - early warning
+      - crisis management
+      - emergency response
+      - community policing
+      - public trust
+      - border security
+      - strategic facilities
+      - civil defense
+      - resilience
+    keywords_ar:
+      - الأمن الوطني
+      - البنية التحتية الحيوية
+      - التطرف
+      - الإنذار المبكر
+      - إدارة الأزمات
+      - الطوارئ
+      - الشرطة المجتمعية
+      - ثقة الجمهور
+      - أمن الحدود
+      - تأمين الحدود
+      - المنشآت الاستراتيجية
+      - الدفاع المدني
+  - code: P2
+    name_en: Cybercrimes and Financial Crimes
+    name_ar: الجرائم السيبرانية والجرائم المالية
+    description_en: "Research on crimes committed through computers, networks and digital platforms, and on financial crimes such as fraud and illicit money flows."
+    description_ar: "بحوث الجرائم التي ترتكب عبر الحاسب والشبكات والمنصات الرقمية، والجرائم المالية مثل الاحتيال والتدفقات المالية غير المشروعة."
+    keywords_en:
+      - cybercrime
+      - cyber attack
+      - money laundering
+      - ransomware
+      - malware
+      - phishing
+      - social engineering
+      - fraud
+      - digital forensics
+      - digital evidence
+      - cryptocurrency
+      - financial crime
+      - banking
+      - network security
+    keywords_ar:
+      - الجرائم السيبرانية
+      - السيبراني
+      - غسل الأموال
+      - برامج الفدية
+      - البرمجيات الخبيثة
+      - التصيد
+      - الهندسة الاجتماعية
+      - الاحتيال
+      - الأدلة الرقمية
+      - الأدلة الجنائية الرقمية
+      - الدليل الرقمي
+      - العملات المشفرة
+      - الجرائم المالية
+      - المصرفية
+      - أمن الشبكات
+  - code: P3
+    name_en: AI and Emerging Technologies
+    name_ar: الذكاء الاصطناعي والتقنيات الناشئة
+    description_en: "Research on artificial intelligence, data science and new technologies and how they are used, governed or misused in security work."
+    description_ar: "بحوث الذكاء الاصطناعي وعلم البيانات والتقنيات الحديثة وكيفية استخدامها وحوكمتها أو إساءة استخدامها في العمل الأمني."
+    keywords_en:
+      - artificial intelligence
+      - machine learning
+      - deep learning
+      - deepfake
+      - computer vision
+      - language model
+      - natural language processing
+      - nlp
+      - drone
+      - predictive
+      - neural network
+      - ai ethics
+      - emerging technolog
+    keywords_ar:
+      - الذكاء الاصطناعي
+      - تعلم الآلة
+      - التعلم العميق
+      - التزييف العميق
+      - الرؤية الحاسوبية
+      - النماذج اللغوية
+      - معالجة اللغة
+      - الطائرات المسيرة
+      - التنبؤ
+      - الشبكات العصبية
+      - التقنيات الناشئة
+  - code: P4
+    name_en: Transnational Security Threats
+    name_ar: التهديدات الأمنية العابرة للحدود
+    description_en: "Research on organised crime and security threats that cross national borders and need cooperation between countries."
+    description_ar: "بحوث الجريمة المنظمة والتهديدات الأمنية التي تتجاوز الحدود الوطنية وتتطلب التعاون بين الدول."
+    keywords_en:
+      - transnational
+      - cross-border
+      - human trafficking
+      - organized crime
+      - smuggling
+      - arms
+      - terrorist financing
+      - terrorism
+      - illegal migration
+      - document fraud
+      - maritime
+      - piracy
+      - regional cooperation
+    keywords_ar:
+      - العابرة للحدود
+      - الاتجار بالبشر
+      - الجريمة المنظمة
+      - تهريب الأسلحة
+      - تمويل الإرهاب
+      - الإرهاب
+      - الهجرة غير النظامية
+      - تزوير الوثائق
+      - البحري
+      - القرصنة
+      - التعاون الإقليمي
+  - code: P5
+    name_en: Narcotics and Psychotropic Substances
+    name_ar: المخدرات والمؤثرات العقلية
+    description_en: "Research on narcotic drugs and psychotropic substances: their use, supply, effects, treatment and prevention."
+    description_ar: "بحوث المخدرات والمؤثرات العقلية: تعاطيها وعرضها وآثارها وعلاجها والوقاية منها."
+    keywords_en:
+      - narcotic
+      - drug
+      - substance abuse
+      - psychoactive
+      - psychotropic
+      - amphetamine
+      - addiction
+      - rehabilitation
+      - relapse
+      - toxicology
+      - prevention program
+    keywords_ar:
+      - المخدرات
+      - مخدر
+      - المؤثرات العقلية
+      - تعاطي
+      - الأمفيتامين
+      - الإدمان
+      - إعادة التأهيل
+      - الانتكاس
+      - السموم
+      - الوقاية
