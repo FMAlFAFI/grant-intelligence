@@ -1,7 +1,11 @@
 # Priority classification: keyword baseline vs embeddings
 
-Run on 2026-10-21 on the synthetic data, with `python -m classification.evaluate_priorities`.
-Model: `intfloat/multilingual-e5-small`, revision `614241f622f53c4eeff9890bdc4f31cfecc418b3` (see `models.lock`).
+The embedding classifier now loads the team model from the `embedding_model` entry of `models.lock`:
+`Qwen/Qwen3-Embedding-0.6B` at `97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3`, the same model as `experiments/exp3_cross_lingual.py`.
+It no longer has a model of its own, so every member gets the same vectors.
+
+The scores below were measured on 2026-10-21 with an earlier version that used `intfloat/multilingual-e5-small`
+(revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`). They are kept as a reference until the Qwen run replaces them.
 Scores are against `content_priority` in the ground truth files, which stand in for hand labels until real labelled proposals exist.
 
 ## Test sets
@@ -54,4 +58,4 @@ not a verdict on any applicant.
 
 - Hand-label a sample of real proposals (the brief asks for 200 to 300) and rerun all three methods on it.
 - Add a margin threshold: send proposals whose top two priorities are close to an "uncertain" list instead of forcing a label.
-- Try Member B's Qwen3-Embedding-0.6B once the team agrees to move `transformers` to 4.51 or later.
+- Rerun `--method embedding` and `--method embedding-fewshot` with Qwen3 and replace the e5 rows above.

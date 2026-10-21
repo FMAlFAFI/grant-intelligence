@@ -46,7 +46,7 @@ def evaluate(results, truth_path, labels):
 def run_method(args, priorities):
     if args.method == "keyword":
         return keyword_classifier.classify_folder(args.proposals, priorities)
-    encoder = embedding_classifier.E5Encoder()
+    encoder = embedding_classifier.LockedEncoder()
     prototypes = embedding_classifier.prototypes_from_descriptions(priorities, encoder)
     if args.method == "embedding-fewshot":
         if Path(args.train_proposals).resolve() == Path(args.proposals).resolve():
