@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
+from classification import embedding_classifier
 from classification.keyword_classifier import UNKNOWN, claimed_priority, classify, load_priorities, normalize, proposal_fields
 from ingestion.text_extractor import extract_lines
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 GRANT_ID = re.compile(r"NAUSS-\d{2}-R\d{2}-\d{3}")
 NOT_GIVEN = "(not given)"
 ORG_UNITS_PATH = Path(__file__).resolve().parents[1] / "config" / "org_units.yaml"
+METHODS = ("embedding", "keyword")
 LABELS = {
     "Funding round": "round",
     "Project type": "type",
@@ -82,7 +84,14 @@ def read_proposal(path, priorities, names, unknown):
     return record
 
 
-def build_portfolio(raw_dir):
+def embedding_priorities(proposals_dir, priorities, encoder=None):
+    rows = embedding_classifier.classify_folder(proposals_dir, priorities, encoder)
+    return {row["grant_id"]: row["predicted_priority"] for row in rows}
+
+
+def build_portfolio(raw_dir, method="embedding", encoder=None):
+    if method not in METHODS:
+        raise ValueError(f"Unknown method {method!r}, expected one of {METHODS}")
     raw_dir = Path(raw_dir)
     priorities = load_priorities()
     names = load_name_map()
@@ -91,9 +100,12 @@ def build_portfolio(raw_dir):
     for value in sorted(unknown):
         logger.warning("Not in org_units.yaml, kept as written: %s", value)
     frame = pd.DataFrame(records)
+    if method == "embedding":
+        predicted = embedding_priorities(raw_dir / "proposals", priorities, encoder)
+        frame["predicted_priority"] = frame["grant_id"].map(predicted).fillna(UNKNOWN)
     funded_ids = {GRANT_ID.search(p.name).group() for p in (raw_dir / "progress_reports").glob("*.docx")}
     frame["funded"] = frame["grant_id"].isin(funded_ids).astype(int)
-    logger.info("Read %d proposals, %d funded", len(frame), frame["funded"].sum())
+    logger.info("Read %d proposals, %d funded, priority from the text by %s", len(frame), frame["funded"].sum(), method)
     return frame
 
 
@@ -145,11 +157,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Portfolio map: counts by round, type, college, department and priority.")
     parser.add_argument("--raw", default="data/synthetic/raw")
     parser.add_argument("--out", default="results/portfolio_map")
+    parser.add_argument("--method", choices=METHODS, default="embedding",
+                        help="How to find the priority from the text: the team embedding model or the keyword list")
     parser.add_argument("--no-charts", action="store_true")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    frame = build_portfolio(args.raw)
+    frame = build_portfolio(args.raw, args.method)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     frame.to_csv(out / "proposals.csv", index=False, encoding="utf-8-sig")
