@@ -1,3 +1,7 @@
+from pathlib import Path
+
+import pytest
+
 from classification.keyword_classifier import (
     UNKNOWN,
     claimed_priority,
@@ -5,9 +9,13 @@ from classification.keyword_classifier import (
     count_matches,
     load_priorities,
     normalize,
+    proposal_fields,
 )
 
 PRIORITIES = load_priorities()
+PROPOSALS = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "raw" / "proposals"
+
+needs_data = pytest.mark.skipif(not PROPOSALS.exists(), reason="synthetic data not unzipped in data/synthetic")
 
 
 def test_arabic_normalization_strips_article_and_hamza():
@@ -45,3 +53,12 @@ def test_empty_proposal_is_unclassified():
 def test_claimed_priority_matches_both_languages():
     assert claimed_priority("الجرائم السيبرانية والجرائم المالية", PRIORITIES) == "Cybercrimes and Financial Crimes"
     assert claimed_priority("AI and Emerging Technologies", PRIORITIES) == "AI and Emerging Technologies"
+
+
+@needs_data
+def test_background_is_read_from_arabic_and_english_forms():
+    arabic = proposal_fields(PROPOSALS / "NAUSS-23-R01-025_proposal_ar.docx")
+    english = proposal_fields(PROPOSALS / "NAUSS-23-R01-004_proposal_en.docx")
+    assert arabic["background"].startswith("لا تزال الدراسات السابقة حول إساءة استخدام العملات المشفرة")
+    assert english["background"] == "Previous studies on machine learning for crime pattern prediction remain limited and mostly descriptive."
+    assert english["abstract"].startswith("This study investigates machine learning")

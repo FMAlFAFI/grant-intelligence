@@ -63,7 +63,7 @@ def canonical(value, names, unknown):
     return found
 
 
-def read_proposal(path, priorities, names, unknown):
+def read_proposal(path, priorities, names, unknown, use_keywords=True):
     fields = proposal_fields(path)
     record = {key: "" for key in LABELS.values()}
     for line in extract_lines(path):
@@ -80,7 +80,7 @@ def read_proposal(path, priorities, names, unknown):
     record["grant_id"] = fields["grant_id"] or GRANT_ID.search(path.name).group()
     record["lang"] = fields["lang"]
     record["claimed_priority"] = claimed_priority(fields["claimed"], priorities)
-    record["predicted_priority"] = classify(fields, priorities)[0]
+    record["predicted_priority"] = classify(fields, priorities)[0] if use_keywords else UNKNOWN
     return record
 
 
@@ -96,7 +96,9 @@ def build_portfolio(raw_dir, method="embedding", encoder=None):
     priorities = load_priorities()
     names = load_name_map()
     unknown = set()
-    records = [read_proposal(path, priorities, names, unknown) for path in sorted((raw_dir / "proposals").glob("*.docx"))]
+    use_keywords = method == "keyword"
+    records = [read_proposal(path, priorities, names, unknown, use_keywords)
+               for path in sorted((raw_dir / "proposals").glob("*.docx"))]
     for value in sorted(unknown):
         logger.warning("Not in org_units.yaml, kept as written: %s", value)
     frame = pd.DataFrame(records)
@@ -186,7 +188,7 @@ def main(argv=None):
 
     mismatched = frame[(frame["claimed_priority"] != frame["predicted_priority"]) & (frame["predicted_priority"] != UNKNOWN)]
     logger.info("Claimed priority differs from the text: %d of %d", len(mismatched), total)
-    logger.info("Saved tables and charts to %s", out)
+    logger.info("Saved tables%s to %s", "" if args.no_charts else " and charts", out)
 
 
 if __name__ == "__main__":

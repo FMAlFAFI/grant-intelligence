@@ -7,7 +7,7 @@ when it has at least one quarterly progress report. Arabic and English unit name
 `config/org_units.yaml`.
 
 The priority is shown twice: the one the researcher ticked on the form (claimed), and the one found in the title,
-keywords and abstract (from the text). By default the text priority comes from the team embedding model in
+keywords, abstract and background (from the text). By default the text priority comes from the team embedding model in
 `models.lock` (Qwen3-Embedding-0.6B); `--method keyword` uses the keyword list instead. See
 [priority-classification.md](priority-classification.md) for how the two compare.
 
@@ -59,10 +59,10 @@ Run on 2026-10-24 with `--method embedding` on `data/synthetic/raw`: 100 proposa
 
 | Priority | Claimed | Funded | From the text (Qwen3) | Funded |
 |---|---|---|---|---|
-| Cybercrimes and Financial Crimes | 25 | 16 | 25 | 15 |
+| Cybercrimes and Financial Crimes | 25 | 16 | 26 | 15 |
 | AI and Emerging Technologies | 24 | 13 | 19 | 12 |
-| National Security | 20 | 13 | 19 | 10 |
-| Transnational Security Threats | 18 | 11 | 24 | 15 |
+| National Security | 20 | 13 | 20 | 10 |
+| Transnational Security Threats | 18 | 11 | 22 | 15 |
 | Narcotics and Psychotropic Substances | 13 | 8 | 13 | 9 |
 
 Priority from the text by round:
@@ -70,10 +70,10 @@ Priority from the text by round:
 | Priority (Qwen3) | 2023 | 2024 | 2025 | Total |
 |---|---|---|---|---|
 | AI and Emerging Technologies | 5 | 8 | 6 | 19 |
-| Cybercrimes and Financial Crimes | 10 | 6 | 9 | 25 |
+| Cybercrimes and Financial Crimes | 10 | 6 | 10 | 26 |
 | Narcotics and Psychotropic Substances | 5 | 5 | 3 | 13 |
-| National Security | 2 | 9 | 8 | 19 |
-| Transnational Security Threats | 8 | 7 | 9 | 24 |
+| National Security | 2 | 9 | 9 | 20 |
+| Transnational Security Threats | 8 | 7 | 7 | 22 |
 | Total | 30 | 35 | 35 | 100 |
 
 ## What the numbers say
@@ -84,7 +84,7 @@ Priority from the text by round:
 4. The claimed priority and the text priority disagree for 18 of 100 proposals with Qwen3 (8 with keywords).
    Qwen3 catches 7 of the 8 real mismatches in the answer key, so most of its 18 flags are false alarms:
    the list is for a person to check, not a verdict.
-5. Transnational Security Threats grows from 18 claimed to 24 found in the text, mostly at the expense of
+5. Transnational Security Threats grows from 18 claimed to 22 found in the text, mostly at the expense of
    AI and Emerging Technologies (24 claimed, 19 found). This follows the weak spot noted in the classifier report.
 
 These are synthetic data. The numbers only check that the pipeline works and must be rerun on the real records.
