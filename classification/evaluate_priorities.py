@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from classification import embedding_classifier, keyword_classifier
-from classification.keyword_classifier import load_priorities
+from classification.keyword_classifier import UNKNOWN, load_priorities
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,33 @@ def f1_table(truth, predicted, labels):
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
         rows.append({"priority": label, "support": tp + fn, "precision": precision, "recall": recall, "f1": f1})
     return pd.DataFrame(rows)
+
+
+def confusion_matrix(truth, predicted, labels):
+    columns = labels + ([UNKNOWN] if (predicted == UNKNOWN).any() else [])
+    table = pd.crosstab(truth, predicted).reindex(index=labels, columns=columns, fill_value=0)
+    table.index.name, table.columns.name = "true", "predicted"
+    return table
+
+
+def confusion_chart(table, title, path):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7.5, 6), dpi=150)
+    ax.imshow(table.values, cmap="Blues")
+    for (row, column), value in pd.DataFrame(table.values).stack().items():
+        color = "white" if value > table.values.max() / 2 else "black"
+        ax.text(column, row, str(value), ha="center", va="center", fontsize=10, color=color)
+    ax.set_xticks(range(len(table.columns)), table.columns, rotation=35, ha="right", fontsize=8)
+    ax.set_yticks(range(len(table.index)), table.index, fontsize=8)
+    ax.set_xlabel("Predicted priority")
+    ax.set_ylabel("True priority (content)")
+    ax.set_title(title, loc="left", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
 
 
 def evaluate(results, truth_path, labels):
@@ -39,6 +66,7 @@ def evaluate(results, truth_path, labels):
             "accuracy": float((part["content_priority"] == part["predicted_priority"]).mean()),
             "macro_f1": float(table["f1"].mean()),
             "per_priority": table,
+            "confusion": confusion_matrix(part["content_priority"], part["predicted_priority"], labels),
         }
     return merged, report
 
@@ -106,6 +134,16 @@ def main(argv=None):
         for row in table.itertuples():
             logger.info("    %-40s support=%2d P=%.2f R=%.2f F1=%.2f", row.priority, row.support, row.precision, row.recall, row.f1)
     pd.concat(summary).to_csv(out / "metrics.csv", index=False, encoding="utf-8-sig")
+
+    for name, part in report.items():
+        part["confusion"].to_csv(out / f"confusion_matrix_{name}.csv", encoding="utf-8-sig")
+        logger.info("Confusion matrix [%s], rows are the true priority:\n%s", name, part["confusion"].to_string())
+    confusion_chart(report["all"]["confusion"], f"Confusion matrix, {args.method}, n = {report['all']['n']}",
+                    out / "confusion_matrix_all.png")
+
+    if "sections_agree" in results:
+        both = results[(results["abstract_priority"] != UNKNOWN) & (results["background_priority"] != UNKNOWN)]
+        logger.info("Abstract and background give the same priority: %d of %d", both["sections_agree"].sum(), len(both))
 
     errors = merged[merged["predicted_priority"] != merged["content_priority"]]
     errors.to_csv(out / "errors.csv", index=False, encoding="utf-8-sig")
