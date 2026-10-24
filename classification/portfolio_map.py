@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
+from classification import embedding_classifier
 from classification.keyword_classifier import UNKNOWN, claimed_priority, classify, load_priorities, normalize, proposal_fields
 from ingestion.text_extractor import extract_lines
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 GRANT_ID = re.compile(r"NAUSS-\d{2}-R\d{2}-\d{3}")
 NOT_GIVEN = "(not given)"
 ORG_UNITS_PATH = Path(__file__).resolve().parents[1] / "config" / "org_units.yaml"
+METHODS = ("embedding", "keyword")
 LABELS = {
     "Funding round": "round",
     "Project type": "type",
@@ -61,7 +63,7 @@ def canonical(value, names, unknown):
     return found
 
 
-def read_proposal(path, priorities, names, unknown):
+def read_proposal(path, priorities, names, unknown, use_keywords=True):
     fields = proposal_fields(path)
     record = {key: "" for key in LABELS.values()}
     for line in extract_lines(path):
@@ -78,22 +80,34 @@ def read_proposal(path, priorities, names, unknown):
     record["grant_id"] = fields["grant_id"] or GRANT_ID.search(path.name).group()
     record["lang"] = fields["lang"]
     record["claimed_priority"] = claimed_priority(fields["claimed"], priorities)
-    record["predicted_priority"] = classify(fields, priorities)[0]
+    record["predicted_priority"] = classify(fields, priorities)[0] if use_keywords else UNKNOWN
     return record
 
 
-def build_portfolio(raw_dir):
+def embedding_priorities(proposals_dir, priorities, encoder=None):
+    rows = embedding_classifier.classify_folder(proposals_dir, priorities, encoder)
+    return {row["grant_id"]: row["predicted_priority"] for row in rows}
+
+
+def build_portfolio(raw_dir, method="embedding", encoder=None):
+    if method not in METHODS:
+        raise ValueError(f"Unknown method {method!r}, expected one of {METHODS}")
     raw_dir = Path(raw_dir)
     priorities = load_priorities()
     names = load_name_map()
     unknown = set()
-    records = [read_proposal(path, priorities, names, unknown) for path in sorted((raw_dir / "proposals").glob("*.docx"))]
+    use_keywords = method == "keyword"
+    records = [read_proposal(path, priorities, names, unknown, use_keywords)
+               for path in sorted((raw_dir / "proposals").glob("*.docx"))]
     for value in sorted(unknown):
         logger.warning("Not in org_units.yaml, kept as written: %s", value)
     frame = pd.DataFrame(records)
+    if method == "embedding":
+        predicted = embedding_priorities(raw_dir / "proposals", priorities, encoder)
+        frame["predicted_priority"] = frame["grant_id"].map(predicted).fillna(UNKNOWN)
     funded_ids = {GRANT_ID.search(p.name).group() for p in (raw_dir / "progress_reports").glob("*.docx")}
     frame["funded"] = frame["grant_id"].isin(funded_ids).astype(int)
-    logger.info("Read %d proposals, %d funded", len(frame), frame["funded"].sum())
+    logger.info("Read %d proposals, %d funded, priority from the text by %s", len(frame), frame["funded"].sum(), method)
     return frame
 
 
@@ -145,11 +159,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Portfolio map: counts by round, type, college, department and priority.")
     parser.add_argument("--raw", default="data/synthetic/raw")
     parser.add_argument("--out", default="results/portfolio_map")
+    parser.add_argument("--method", choices=METHODS, default="embedding",
+                        help="How to find the priority from the text: the team embedding model or the keyword list")
     parser.add_argument("--no-charts", action="store_true")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    frame = build_portfolio(args.raw)
+    frame = build_portfolio(args.raw, args.method)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     frame.to_csv(out / "proposals.csv", index=False, encoding="utf-8-sig")
@@ -172,7 +188,7 @@ def main(argv=None):
 
     mismatched = frame[(frame["claimed_priority"] != frame["predicted_priority"]) & (frame["predicted_priority"] != UNKNOWN)]
     logger.info("Claimed priority differs from the text: %d of %d", len(mismatched), total)
-    logger.info("Saved tables and charts to %s", out)
+    logger.info("Saved tables%s to %s", "" if args.no_charts else " and charts", out)
 
 
 if __name__ == "__main__":

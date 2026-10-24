@@ -1,12 +1,23 @@
 # Priority classification: keyword baseline vs embeddings
 
-The embedding classifier now loads the team model from the `embedding_model` entry of `models.lock`:
+The embedding classifier loads the team model from the `embedding_model` entry of `models.lock`:
 `Qwen/Qwen3-Embedding-0.6B` at `97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3`, the same model as `experiments/exp3_cross_lingual.py`.
-It no longer has a model of its own, so every member gets the same vectors.
+It has no model of its own, so every member gets the same vectors.
 
-The scores below were measured on 2026-10-21 with an earlier version that used `intfloat/multilingual-e5-small`
-(revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`). They are kept as a reference until the Qwen run replaces them.
-Scores are against `content_priority` in the ground truth files, which stand in for hand labels until real labelled proposals exist.
+## What text is classified
+
+Each proposal is classified from its title, keywords, abstract (section 3) and background and justification (section 5),
+joined in that order. The keyword method scores the same four fields (title x3, keywords x2, abstract and background x1).
+
+Following stage 2 of the brief, the embedding method also classifies the abstract and the background on their own and
+writes both labels to `predictions.csv` (`abstract_priority`, `background_priority`, `sections_agree`), so the two
+sections can be compared with each other and with the claimed priority.
+
+Scores below were run on 2026-10-24 (Python 3.14, team stack from `requirements.txt`). The "without background" row is the
+2026-10-21 run on title, keywords and abstract only. The e5 rows come from an earlier version that used
+`intfloat/multilingual-e5-small` (revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`) and are kept for comparison.
+Scores are against `content_priority` in the ground truth files, which stand in for hand labels until real labelled
+proposals exist.
 
 ## Test sets
 
@@ -22,40 +33,82 @@ The keyword list and the priority descriptions were frozen before the hard set w
 | Method | Standard, all | Standard, ar | Standard, en | Hard, all | Hard, ar | Hard, en |
 |---|---|---|---|---|---|---|
 | Keywords (`--method keyword`) | 1.00 | 1.00 | 1.00 | 0.06 | 0.06 | 0.06 |
-| Embeddings, zero-shot (`--method embedding`) | 0.78 | 0.79 | 0.79 | **0.63** | 0.70 | 0.54 |
-| Embeddings, few-shot on the standard set (`--method embedding-fewshot`) | not scored | | | 0.59 | 0.72 | 0.38 |
+| **Qwen3, zero-shot (`--method embedding`)** | **0.89** | 0.83 | 0.92 | **0.76** | 0.75 | 0.74 |
+| Qwen3, without background | 0.89 | 0.85 | 0.90 | 0.74 | 0.73 | 0.74 |
+| e5, zero-shot (earlier run) | 0.78 | 0.79 | 0.79 | 0.63 | 0.70 | 0.54 |
+| e5, few-shot on the standard set (earlier run) | not scored | | | 0.59 | 0.72 | 0.38 |
 
 Few-shot is not scored on the standard set because it is trained on it.
 
-## Per-priority F1, zero-shot embeddings
+## Per-priority F1, zero-shot
 
-| Priority | Standard | Hard |
-|---|---|---|
-| National Security | 0.66 | 0.42 |
-| Cybercrimes and Financial Crimes | 0.91 | 0.69 |
-| AI and Emerging Technologies | 0.55 | 0.74 |
-| Transnational Security Threats | 0.83 | 0.60 |
-| Narcotics and Psychotropic Substances | 0.96 | 0.72 |
+| Priority | Qwen3 standard | Qwen3 hard | e5 standard | e5 hard |
+|---|---|---|---|---|
+| National Security | 0.86 | 0.46 | 0.66 | 0.42 |
+| Cybercrimes and Financial Crimes | 0.90 | 0.73 | 0.91 | 0.69 |
+| AI and Emerging Technologies | 0.88 | 0.85 | 0.55 | 0.74 |
+| Transnational Security Threats | 0.80 | 0.76 | 0.83 | 0.60 |
+| Narcotics and Psychotropic Substances | 1.00 | 0.98 | 0.96 | 0.72 |
+
+Per-language tables are in `results/priority_<method>/metrics.csv`.
+
+## Confusion matrices, Qwen3
+
+Rows are the true priority, columns the predicted one. Each run writes `confusion_matrix_all.csv`, `_ar.csv`, `_en.csv`
+and a heatmap `confusion_matrix_all.png`.
+
+Standard set (n = 100):
+
+| True \ Predicted | National Security | Cybercrimes | AI | Transnational | Narcotics |
+|---|---|---|---|---|---|
+| National Security | **18** | 0 | 0 | 4 | 0 |
+| Cybercrimes and Financial Crimes | 1 | **22** | 0 | 0 | 0 |
+| AI and Emerging Technologies | 1 | 2 | **19** | 2 | 0 |
+| Transnational Security Threats | 0 | 2 | 0 | **16** | 0 |
+| Narcotics and Psychotropic Substances | 0 | 0 | 0 | 0 | **13** |
+
+Hard set (n = 100):
+
+| True \ Predicted | National Security | Cybercrimes | AI | Transnational | Narcotics |
+|---|---|---|---|---|---|
+| National Security | **9** | 5 | 0 | 7 | 0 |
+| Cybercrimes and Financial Crimes | 4 | **15** | 1 | 0 | 0 |
+| AI and Emerging Technologies | 4 | 0 | **17** | 0 | 0 |
+| Transnational Security Threats | 0 | 1 | 1 | **14** | 0 |
+| Narcotics and Psychotropic Substances | 1 | 0 | 0 | 0 | **21** |
 
 ## What the numbers say
 
 1. **Keywords only work when the vocabulary is known in advance.** Perfect on the standard set, 0.06 on the hard set,
    where 90 of 100 proposals match no keyword at all.
-2. **Embeddings generalise.** They lose some accuracy on the easy set (0.78) but hold 0.63 on wording they never saw.
-3. **National Security is a sink.** Its precision is low (0.53 standard, 0.34 hard): proposals about security work in general
-   (for example "machine learning for crime pattern prediction") land there. AI recall on the standard set is only 0.38 for this reason.
-4. **English is weaker than Arabic on the hard set** (0.54 vs 0.70 zero-shot). With 43 and 57 proposals the gap may partly be noise.
-5. **Few-shot did not help** (0.59 vs 0.63) and hurt English badly (0.38). The standard set repeats a few template sentences, so its
-   centroids learn the templates, not the priorities. Real hand-labelled proposals should behave better.
+2. **Qwen3 is the best general method:** 0.89 on the standard set and 0.76 on wording it never saw, against 0.78 and 0.63 for e5.
+3. **Adding the background helps a little on new wording and changes nothing overall on the standard set.** Hard set 0.74 to 0.76
+   (Arabic 0.73 to 0.75); standard set unchanged at 0.89, with Arabic down from 0.85 to 0.83 and English up from 0.90 to 0.92.
+   The synthetic background is one sentence that repeats the topic, so real forms are needed to judge it properly.
+4. **National Security is still the weak spot** (hard F1 0.46). The confusion matrix shows where it goes: 7 of 21 true
+   National Security proposals land in Transnational Security Threats and 5 in Cybercrimes, and 9 proposals from other
+   priorities are pulled into National Security.
+5. **Abstract and background agree** on the priority for 85 of 100 proposals on the standard set and 81 of 100 on the hard set.
+6. **Few-shot was only measured with e5** and did not help (0.59 vs 0.63). It is not rerun with Qwen3 yet.
 
-## Claimed vs text check (standard set, zero-shot)
+## Claimed vs text check
 
-The embeddings flag 29 proposals whose claimed priority differs from the text. All 8 real mismatches are among them
-(recall 8 of 8), but 21 flags are false alarms (precision 8 of 29). The flag is a screening list for a person to check,
-not a verdict on any applicant.
+Reported separately from the scores, as the brief asks. The answer key holds 8 real mismatches on the standard set and
+11 on the hard set (`claimed_priority` differs from `content_priority`).
+
+| Method | Set | Flags (claimed differs from text) | Real mismatches caught | Missed |
+|---|---|---|---|---|
+| Keywords | Standard | 8 | 8 of 8 | none |
+| Qwen3 | Standard | 18 | 7 of 8 | NAUSS-25-R03-011 |
+| Qwen3 | Hard | 28 | 9 of 11 | NAUSS-24-R02-071, NAUSS-25-R03-068 |
+
+Without background Qwen3 caught 7 of 8 with 18 flags (standard) and 8 of 11 with 27 flags (hard). Most flags are false
+alarms, so the list is for a person to check, not a verdict on any applicant.
 
 ## Next steps
 
 - Hand-label a sample of real proposals (the brief asks for 200 to 300) and rerun all three methods on it.
 - Add a margin threshold: send proposals whose top two priorities are close to an "uncertain" list instead of forcing a label.
-- Rerun `--method embedding` and `--method embedding-fewshot` with Qwen3 and replace the e5 rows above.
+- Use `sections_agree` as a second signal: a proposal whose abstract and background point to different priorities is worth a look.
+- Rerun `--method embedding-fewshot` with Qwen3.
+- Try Qwen3's `query` instruction prompt, which the model ships with but this classifier does not use yet (same as `experiments/exp3_cross_lingual.py`).

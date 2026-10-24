@@ -7,13 +7,14 @@ import pytest
 from classification.embedding_classifier import (
     EmbeddingCache,
     ModelNotLocked,
+    classify_section,
     classify_texts,
     proposal_text,
     prototypes_from_descriptions,
     prototypes_from_examples,
     read_lock,
 )
-from classification.keyword_classifier import load_priorities
+from classification.keyword_classifier import UNKNOWN, load_priorities
 
 PRIORITIES = load_priorities()
 
@@ -58,6 +59,24 @@ def test_examples_move_the_prototype_towards_labelled_texts():
 
 def test_proposal_text_skips_empty_fields():
     assert proposal_text({"title": "A title", "keywords": "", "abstract": "Some abstract"}) == "A title. Some abstract"
+
+
+def test_proposal_text_ends_with_the_background():
+    fields = {"title": "A title", "keywords": "k", "abstract": "Some abstract", "background": "Earlier work"}
+    assert proposal_text(fields) == "A title. k. Some abstract. Earlier work"
+
+
+def test_sections_are_classified_on_their_own():
+    encoder = WordEncoder()
+    prototypes = prototypes_from_descriptions(PRIORITIES, encoder)
+    records = [
+        (None, {"abstract": "narcotic drugs and psychotropic substances treatment", "background": ""}),
+        (None, {"abstract": "", "background": "narcotic drugs and psychotropic substances prevention"}),
+    ]
+    assert classify_section(records, "abstract", PRIORITIES, encoder, prototypes) == [
+        "Narcotics and Psychotropic Substances", UNKNOWN]
+    assert classify_section(records, "background", PRIORITIES, encoder, prototypes) == [
+        UNKNOWN, "Narcotics and Psychotropic Substances"]
 
 
 def test_lock_reads_the_team_model_from_models_lock(tmp_path):

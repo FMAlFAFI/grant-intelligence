@@ -10,7 +10,7 @@ from ingestion.text_extractor import extract_lines
 logger = logging.getLogger(__name__)
 
 CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "priorities.yaml"
-FIELD_WEIGHTS = {"title": 3.0, "keywords": 2.0, "abstract": 1.0}
+FIELD_WEIGHTS = {"title": 3.0, "keywords": 2.0, "abstract": 1.0, "background": 1.0}
 UNKNOWN = "Unclassified"
 
 ARABIC_DIACRITICS = re.compile(r"[ً-ْـ]")
@@ -54,8 +54,8 @@ def load_priorities(path=CONFIG_PATH):
 
 def proposal_fields(path):
     lines = extract_lines(path)
-    fields = {"title": "", "abstract": "", "keywords": "", "claimed": "", "grant_id": "", "lang": ""}
-    sections = {"3.": "abstract", "4.": "keywords"}
+    fields = {"title": "", "abstract": "", "keywords": "", "background": "", "claimed": "", "grant_id": "", "lang": ""}
+    sections = {"3.": "abstract", "4.": "keywords", "5.": "background"}
     for index, line in enumerate(lines):
         label, _, value = line.partition("|")
         value = value.strip()
