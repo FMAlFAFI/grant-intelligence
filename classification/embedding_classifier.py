@@ -89,7 +89,7 @@ class LockedEncoder:
 
 
 def proposal_text(fields):
-    parts = [fields.get("title", ""), fields.get("keywords", ""), fields.get("abstract", "")]
+    parts = [fields.get(name, "") for name in ("title", "keywords", "abstract", "background")]
     return ". ".join(part for part in parts if part)
 
 
@@ -145,6 +145,12 @@ def read_folder(proposals_dir):
     return records
 
 
+def classify_section(records, name, priorities, encoder, prototypes):
+    texts = [fields.get(name, "") for _, fields in records]
+    labels = iter(label for label, *_ in classify_texts([t for t in texts if t], priorities, encoder, prototypes))
+    return [next(labels) if text else UNKNOWN for text in texts]
+
+
 def classify_folder(proposals_dir, priorities=None, encoder=None, prototypes=None):
     priorities = priorities or load_priorities()
     encoder = encoder or LockedEncoder()
@@ -152,8 +158,11 @@ def classify_folder(proposals_dir, priorities=None, encoder=None, prototypes=Non
     records = read_folder(proposals_dir)
     texts = [proposal_text(fields) for _, fields in records]
     predictions = classify_texts(texts, priorities, encoder, prototypes)
+    abstracts = classify_section(records, "abstract", priorities, encoder, prototypes)
+    backgrounds = classify_section(records, "background", priorities, encoder, prototypes)
     rows = []
-    for (path, fields), text, (label, similarity, margin, runner_up) in zip(records, texts, predictions):
+    for (path, fields), text, (label, similarity, margin, runner_up), abstract, background in zip(
+            records, texts, predictions, abstracts, backgrounds):
         claimed = claimed_priority(fields["claimed"], priorities)
         rows.append({
             "grant_id": fields["grant_id"] or path.stem,
@@ -164,7 +173,10 @@ def classify_folder(proposals_dir, priorities=None, encoder=None, prototypes=Non
             "similarity": round(similarity, 4),
             "margin": round(margin, 4),
             "runner_up": runner_up,
-            "empty_fields": ",".join(name for name in ("title", "keywords", "abstract") if not fields[name]),
+            "abstract_priority": abstract,
+            "background_priority": background,
+            "sections_agree": int(abstract == background != UNKNOWN),
+            "empty_fields": ",".join(name for name in ("title", "keywords", "abstract", "background") if not fields[name]),
         })
     logger.info("Classified %d proposals from %s with %s", len(rows), proposals_dir, getattr(encoder, "model_name", "encoder"))
     return rows
