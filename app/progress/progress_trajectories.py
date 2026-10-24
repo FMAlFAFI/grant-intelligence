@@ -81,6 +81,45 @@ def find_value(items, pattern):
     return ""
 
 
+def extract_quarter(items):
+    """Extract a quarter number from document text and table cells."""
+    text = "\n".join(items)
+
+    # Normalize Arabic-Indic digits to Western digits.
+    text = text.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789"))
+    text = text.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+
+    # Match labels and values in the same paragraph or cell.
+    patterns = [
+        r"\bquarter\s*[:：\-]?\s*([1-4])\b",
+        r"الربع\s*[:：\-]?\s*([1-4])\b",
+        r"\bq\s*([1-4])\b",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+
+    # Match labels and values separated by a line break or cell.
+    for index, item in enumerate(items):
+        normalized = item.strip().casefold()
+
+        if normalized in {"quarter", "الربع", "quarter:", "الربع:"}:
+            for candidate in items[index + 1:index + 4]:
+                candidate = candidate.translate(
+                    str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+                ).translate(
+                    str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+                ).strip()
+
+                match = re.fullmatch(r"[Qq]?\s*([1-4])", candidate)
+                if match:
+                    return match.group(1)
+
+    return ""
+
+
 def extract_stage_completion(items, labels):
     """Find a stage label and its nearby completion percentage."""
     for index, item in enumerate(items):
@@ -106,20 +145,7 @@ def process_report(path):
         r"\b(NAUSS-\d{2}-R\d{2}-\d{3})\b",
     )
 
-    quarter = find_value(
-        items,
-        r"^\s*(?:Quarter|الربع)\s*[:：]?\s*(\d+)\s*$",
-    )
-
-    # Some Word documents store the label and value in separate cells.
-    if not quarter:
-        for index, item in enumerate(items):
-            if item.strip().casefold() in {"quarter", "الربع"}:
-                if index + 1 < len(items):
-                    match = re.search(r"\b([1-4])\b", items[index + 1])
-                    if match:
-                        quarter = match.group(1)
-                        break
+    quarter = extract_quarter(items)
 
     record = {
         "source_file": path.name,
