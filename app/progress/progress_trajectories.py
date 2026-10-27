@@ -81,41 +81,41 @@ def find_value(items, pattern):
     return ""
 
 
+def _normalize_digits(value):
+    """Convert Arabic-Indic digits to Western digits."""
+    return value.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")).translate(
+        str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
+    )
+
+
 def extract_quarter(items):
-    """Extract a quarter number from document text and table cells."""
-    text = "\n".join(items)
+    """Extract a positive quarter number from report text or table cells.
 
-    # Normalize Arabic-Indic digits to Western digits.
-    text = text.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789"))
-    text = text.translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+    Quarter numbers are not limited to 1–4: projects can span more than one
+    year, so values such as Q05 and Q12 are valid.
+    """
+    normalized_items = [_normalize_digits(item).strip() for item in items]
+    text = "\n".join(normalized_items)
 
-    # Match labels and values in the same paragraph or cell.
+    # Handle labels and values appearing in the same paragraph or cell.
     patterns = [
-        r"\bquarter\s*[:：\-]?\s*([1-4])\b",
-        r"الربع\s*[:：\-]?\s*([1-4])\b",
-        r"\bq\s*([1-4])\b",
+        r"\bquarter\s*[:：\-/]?\s*([1-9]\d*)\b",
+        r"الربع\s*[:：\-/]?\s*([1-9]\d*)\b",
+        r"\bq\s*0*([1-9]\d*)\b",
     ]
-
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            return match.group(1)
+            return str(int(match.group(1)))
 
-    # Match labels and values separated by a line break or cell.
-    for index, item in enumerate(items):
-        normalized = item.strip().casefold()
-
-        if normalized in {"quarter", "الربع", "quarter:", "الربع:"}:
-            for candidate in items[index + 1:index + 4]:
-                candidate = candidate.translate(
-                    str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
-                ).translate(
-                    str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
-                ).strip()
-
-                match = re.fullmatch(r"[Qq]?\s*([1-4])", candidate)
+    # Word tables commonly place the bilingual label and its value in
+    # adjacent cells, so look ahead from any item containing the label.
+    for index, item in enumerate(normalized_items):
+        if re.search(r"\bquarter\b|الربع", item, re.IGNORECASE):
+            for candidate in normalized_items[index + 1:index + 4]:
+                match = re.fullmatch(r"[Qq]?\s*0*([1-9]\d*)", candidate)
                 if match:
-                    return match.group(1)
+                    return str(int(match.group(1)))
 
     return ""
 
@@ -146,6 +146,11 @@ def process_report(path):
     )
 
     quarter = extract_quarter(items)
+    if not quarter:
+        # The generated report filenames encode the reporting quarter (Q01, etc.).
+        filename_match = re.search(r"_Q(\d+)_progress\.docx$", path.name, re.IGNORECASE)
+        if filename_match and int(filename_match.group(1)) > 0:
+            quarter = str(int(filename_match.group(1)))
 
     record = {
         "source_file": path.name,
