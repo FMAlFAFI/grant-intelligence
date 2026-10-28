@@ -1,0 +1,61 @@
+
+review_criteria:
+  - id: C01
+    name: "Title reflects importance and follows correct scientific style"
+    weight: 5
+
+  - id: C02
+    name: "Originality and novelty"
+    weight: 15
+
+  - id: C03
+    name: "Objectives are clear, measurable, and achievable"
+    weight: 10
+
+  - id: C04
+    name: "Objectives are linked to the research topic"
+    weight: 5
+
+  - id: C05
+    name: "Justification is clear, background is thorough, and sources are recent"
+    weight: 15
+
+  - id: C06
+    name: "Methodology is appropriate"
+    weight: 3
+
+  - id: C07
+    name: "Plan specifies procedures and time frame"
+    weight: 5
+
+  - id: C08
+    name: "Population and sampling are clear"
+    weight: 3
+
+  - id: C09
+    name: "Data collection methods are correct"
+    weight: 3
+
+  - id: C10
+    name: "Statistical analysis is clear and correct"
+    weight: 3
+
+  - id: C11
+    name: "Ethical considerations are clear"
+    weight: 3
+
+  - id: C12
+    name: "Targeted papers are clear and consistent with objectives"
+    weight: 10
+
+  - id: C13
+    name: "Team expertise is related to the research topic"
+    weight: 5
+
+  - id: C14
+    name: "Budget is suitable and connected to the proposal"
+    weight: 10
+
+  - id: C15
+    name: "Team size and roles are suitable"
+    weight: 5
