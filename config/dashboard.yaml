@@ -1,0 +1,21 @@
+version: 1
+raw_dir: data/synthetic/raw
+register: results/register/grants_register.csv
+progress_history: results/register/progress_history.csv
+portfolio_dir: results/portfolio_map
+priority_runs:
+  embedding:
+    standard: results/priority_embedding
+    hard: results/priority_embedding_hard
+  keyword:
+    standard: results/priority_keyword
+    hard: results/priority_keyword_hard
+pending_modules:
+  drift:
+    owner: Member C
+    file: results/drift/drift_scores.csv
+    produced_by: drift module (not on main yet)
+  stalls:
+    owner: Member D
+    file: results/progress/stall_alerts.csv
+    produced_by: progress/stall_detector.py (not on main yet)
