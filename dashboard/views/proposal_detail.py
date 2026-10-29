@@ -68,10 +68,14 @@ if predictions is not None:
     else:
         row = row.iloc[0]
         columns = st.columns(4)
-        columns[0].metric("Claimed", row["claimed_priority"])
-        columns[1].metric("From the text", row["predicted_priority"])
-        columns[2].metric("Similarity", f"{row['similarity']:.3f}")
-        columns[3].metric("Margin to runner up", f"{row['margin']:.3f}")
+        with columns[0]:
+            labelled("Claimed priority", row["claimed_priority"])
+        with columns[1]:
+            labelled("Priority from the text", row["predicted_priority"])
+        with columns[2]:
+            labelled("Similarity", f"{row['similarity']:.3f}")
+        with columns[3]:
+            labelled("Margin to runner up", f"{row['margin']:.3f}")
         if row["claimed_priority"] != row["predicted_priority"]:
             st.warning(f"The claimed priority differs from the text. Runner up: {row.get('runner_up', '')}",
                        icon=":material/rule:")

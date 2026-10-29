@@ -98,7 +98,8 @@ def heatmap(matrix, key=None):
     data["label"] = data["count"].astype(int).astype(str) + " of " + totals.astype(int).astype(str)
     pick = alt.selection_point(fields=["true", "predicted"], name="pick")
     base = alt.Chart(data).encode(
-        x=alt.X("predicted:N", sort=order, title="Priority from the text", axis=alt.Axis(labelAngle=-30)),
+        x=alt.X("predicted:N", sort=order, title="Priority from the text",
+              axis=alt.Axis(labelAngle=-25, labelOverlap=False, labelLimit=200)),
         y=alt.Y("true:N", sort=order, title="True priority"),
     )
     cells = base.mark_rect(stroke="#fcfcfb", strokeWidth=2, cornerRadius=3).encode(
