@@ -149,3 +149,24 @@ def histogram(frame, column, threshold=None, title=None):
             x="threshold:Q")
         chart = chart + rule
     st.altair_chart(styled(chart, 240), width="stretch")
+
+
+def stacked_states(frame, category, state, order, colors, key=None, title="Stages"):
+    data = frame.groupby([category, state]).size().reset_index(name="count")
+    totals = frame.groupby(category).size()
+    data["label"] = data.apply(lambda row: f"{row['count']} of {totals[row[category]]}", axis=1)
+    states = list(colors)
+    data["rank"] = data[state].map({name: rank for rank, name in enumerate(states)})
+    pick = alt.selection_point(fields=[category, state], name="pick")
+    chart = alt.Chart(data).mark_bar(stroke="#fcfcfb", strokeWidth=2).encode(
+        y=alt.Y(f"{category}:N", sort=order, title=None, axis=alt.Axis(labelOverlap=False)),
+        x=alt.X("count:Q", title=title, stack="zero"),
+        color=alt.Color(f"{state}:N", title=None,
+                        scale=alt.Scale(domain=states, range=[colors[name] for name in states])),
+        order=alt.Order("rank:Q"),
+        opacity=alt.condition(pick, alt.value(1.0), alt.value(0.35)),
+        tooltip=[alt.Tooltip(f"{category}:N", title="Group"), alt.Tooltip(f"{state}:N", title="State"),
+                 alt.Tooltip("label:N", title="Count")],
+    ).add_params(pick)
+    event = st.altair_chart(styled(chart, 40 * len(totals) + 40), key=key, on_select="rerun", width="stretch")
+    return picked(event, "pick")

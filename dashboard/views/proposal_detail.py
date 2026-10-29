@@ -8,8 +8,9 @@ from dashboard.components.rtl import labelled
 from dashboard.components.source_viewer import source_viewer
 from dashboard.components.status_badge import badge
 from dashboard.components.timeline import timeline
-from dashboard.data.adapters import load_drift, load_stalls
+from dashboard.data.adapters import load_drift, load_stalls, load_timetables, load_trajectories
 from dashboard.data.loaders import load_predictions, load_progress_history, load_register
+from dashboard.data.progress import plan_vs_actual
 from ingestion.grant_register import STAGE_COLUMNS, STAGES
 
 
@@ -58,6 +59,20 @@ with right:
         last = history.iloc[-1]
         st.caption(f"Stages in the last report (quarter {int(last['quarter'])})")
         stage_bars([{"stage": name, "percent": last[column]} for name, column in zip(STAGES, STAGE_COLUMNS)])
+
+trajectories = load_trajectories()
+timetables = load_timetables()
+if grant["funded"] and trajectories.ready and timetables.ready:
+    plan = plan_vs_actual(trajectories.frame, timetables.frame)
+    plan = plan[plan["grant_id"] == grant_id]
+    if not plan.empty:
+        st.caption("Each stage against the proposal's own timetable (Member C's trajectories and timetables)")
+        shown = plan[["stage_name", "planned_start", "planned_end", "planned_quarter", "done_quarter",
+                      "slip_quarters", "state"]]
+        st.dataframe(shown, hide_index=True, width="stretch", column_config={
+            "stage_name": "Stage", "planned_start": "Planned from month", "planned_end": "Planned to month",
+            "planned_quarter": "Planned by quarter", "done_quarter": "Finished in quarter",
+            "slip_quarters": "Late by (quarters)", "state": "State"})
 
 st.subheader("Priority")
 predictions = guarded(load_predictions, "embedding", "standard")

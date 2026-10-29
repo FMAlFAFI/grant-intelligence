@@ -26,7 +26,7 @@ def guarded(loader, *args):
 def pending_panel(output, title, will_show):
     with st.container(border=True):
         st.subheader(f":material/hourglass_top: {title}: not finished yet")
-        st.markdown(f"This part belongs to **{output.owner}** and its output is not on `main` yet. What is missing:")
+        st.markdown(f"Owner: **{output.owner}**. Its output is not on `main` yet. What is missing:")
         st.markdown("\n".join(f"- {item}" for item in output.missing))
         st.markdown("When the file is in place this page will show:")
         st.markdown("\n".join(f"- {item}" for item in will_show))

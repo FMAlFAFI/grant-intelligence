@@ -30,6 +30,11 @@ COLUMN_LABELS = {
     "drift_flag": "Drifted",
     "alert": "Alert",
     "quarter": "Quarter",
+    "stage_name": "Stage",
+    "planned_quarter": "Planned by quarter",
+    "done_quarter": "Finished in quarter",
+    "slip_quarters": "Late by (quarters)",
+    "percent_now": "Stage % now",
 }
 
 

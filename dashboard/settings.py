@@ -8,7 +8,7 @@ CONFIG_PATH = ROOT / "config" / "dashboard.yaml"
 
 
 @dataclass(frozen=True)
-class PendingModule:
+class TeamOutput:
     name: str
     owner: str
     file: Path
@@ -22,7 +22,7 @@ class Settings:
     progress_history: Path
     portfolio_dir: Path
     priority_runs: dict
-    pending: dict = field(default_factory=dict)
+    team_outputs: dict = field(default_factory=dict)
 
     def priority_dir(self, method, dataset):
         return self.priority_runs[method][dataset]
@@ -40,9 +40,9 @@ def load_settings(path=CONFIG_PATH, root=ROOT):
         method: {dataset: resolve(folder, root) for dataset, folder in datasets.items()}
         for method, datasets in config["priority_runs"].items()
     }
-    pending = {
-        name: PendingModule(name, item["owner"], resolve(item["file"], root), item["produced_by"])
-        for name, item in config.get("pending_modules", {}).items()
+    team_outputs = {
+        name: TeamOutput(name, item["owner"], resolve(item["file"], root), item["produced_by"])
+        for name, item in config.get("team_outputs", {}).items()
     }
     return Settings(
         raw_dir=resolve(config["raw_dir"], root),
@@ -50,5 +50,5 @@ def load_settings(path=CONFIG_PATH, root=ROOT):
         progress_history=resolve(config["progress_history"], root),
         portfolio_dir=resolve(config["portfolio_dir"], root),
         priority_runs=runs,
-        pending=pending,
+        team_outputs=team_outputs,
     )
