@@ -28,12 +28,12 @@ def relative(path):
         return str(path)
 
 
-def read_pending(module):
+def read_team_output(module):
     if not module.file.exists():
         missing = [
             f"File {module.file.name} expected at {relative(module.file)}",
             f"Produced by {module.produced_by}",
-            "Columns, one row per grant_id: " + ", ".join(CONTRACTS[module.name]),
+            "Columns: " + ", ".join(CONTRACTS[module.name]),
         ]
         return ModuleOutput(module.name, module.owner, False, empty_frame(module.name), missing)
     frame = pd.read_csv(module.file, encoding="utf-8-sig")
@@ -44,11 +44,25 @@ def read_pending(module):
     return ModuleOutput(module.name, module.owner, True, frame)
 
 
+def load_output(name):
+    return read_team_output(settings().team_outputs[name])
+
+
 @st.cache_data
 def load_drift():
-    return read_pending(settings().pending["drift"])
+    return load_output("drift")
 
 
 @st.cache_data
 def load_stalls():
-    return read_pending(settings().pending["stalls"])
+    return load_output("stalls")
+
+
+@st.cache_data
+def load_trajectories():
+    return load_output("trajectories")
+
+
+@st.cache_data
+def load_timetables():
+    return load_output("timetables")

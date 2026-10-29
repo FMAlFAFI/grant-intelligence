@@ -9,6 +9,11 @@ CONTRACTS = {
     "metrics": ["priority", "support", "precision", "recall", "f1", "subset"],
     "predictions": ["grant_id", "lang", "claimed_priority", "predicted_priority", "content_priority"],
     "claim_disagreements": ["grant_id", "lang", "claimed_priority", "predicted_priority", "margin"],
+    "trajectories": [
+        "project_number", "quarter", "literature_review", "instrument_design", "ethics_approval",
+        "data_collection", "data_analysis", "writing_results", "paper_submission", "final_report",
+    ],
+    "timetables": ["proposal_number", "task", "from_month", "to_month"],
     "drift": ["grant_id", "similarity", "threshold", "drift_flag", "n_papers"],
     "stalls": ["grant_id", "stall_stage", "stall_quarters", "slip_months", "alert"],
 }

@@ -3,23 +3,23 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from dashboard.data.adapters import ModuleOutput, read_pending
+from dashboard.data.adapters import ModuleOutput, read_team_output
 from dashboard.data.contracts import CONTRACTS, ContractError, check, missing_columns
 from dashboard.data.sources import index_sources
-from dashboard.settings import PendingModule, load_settings
+from dashboard.settings import TeamOutput, load_settings
 
 RAW = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "raw"
 
 
 def pending(path, name="drift"):
-    return PendingModule(name, "Member C", Path(path), "the drift module")
+    return TeamOutput(name, "Member C", Path(path), "the drift module")
 
 
 def test_settings_resolve_paths_against_the_repo_root():
     settings = load_settings()
     assert settings.register.is_absolute()
     assert settings.priority_dir("embedding", "hard").name.endswith("hard")
-    assert set(settings.pending) == {"drift", "stalls"}
+    assert set(settings.team_outputs) == {"trajectories", "timetables", "drift", "stalls"}
 
 
 def test_contract_reports_the_columns_a_file_lacks():
@@ -31,7 +31,7 @@ def test_contract_reports_the_columns_a_file_lacks():
 
 
 def test_a_missing_teammate_file_gives_an_empty_frame_and_a_reason(tmp_path):
-    output = read_pending(pending(tmp_path / "drift_scores.csv"))
+    output = read_team_output(pending(tmp_path / "drift_scores.csv"))
     assert isinstance(output, ModuleOutput)
     assert not output.ready
     assert output.frame.empty
@@ -42,7 +42,7 @@ def test_a_missing_teammate_file_gives_an_empty_frame_and_a_reason(tmp_path):
 def test_a_teammate_file_with_the_wrong_columns_is_not_used(tmp_path):
     path = tmp_path / "drift_scores.csv"
     pd.DataFrame({"grant_id": ["NAUSS-23-R01-001"], "score": [0.4]}).to_csv(path, index=False)
-    output = read_pending(pending(path))
+    output = read_team_output(pending(path))
     assert not output.ready
     assert "similarity" in output.missing[0]
 
@@ -52,7 +52,7 @@ def test_a_teammate_file_that_fits_the_contract_is_read(tmp_path):
     frame = pd.DataFrame([{"grant_id": "NAUSS-23-R01-001", "similarity": 0.4, "threshold": 0.5,
                            "drift_flag": 1, "n_papers": 2}])
     frame.to_csv(path, index=False)
-    output = read_pending(pending(path))
+    output = read_team_output(pending(path))
     assert output.ready
     assert len(output.frame) == 1
 
