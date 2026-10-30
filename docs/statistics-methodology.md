@@ -147,13 +147,18 @@ researchers". We expect weak or null results and will report them either way.
 
 Thresholds fixed now, before running it on any data:
 
-- A stage is **stalled** at a report when it had started (> 0%), had not finished (< 100%), and gained
-  **5 percentage points or less** since the previous report. This matches the brief's example of 40 → 45.
+- A stage is **stalled** at a report when it had started (> 0%), is still not finished (< 100%) at that
+  report, and gained **5 percentage points or less** since the previous report. This matches the brief's
+  example of 40 → 45. Finishing (e.g. 96 → 100) is not a stall.
 - Output says "review recommended" with the grant ID and stage, never anything about the researcher.
 - **Sensitivity versions**, reported next to the main rule so the trade-off is visible: exact freeze
   (0 points), 10 points, and stalled for 2 reports in a row.
-- **Slip**: for each timetable task, the month the matching stage first reaches 100% minus the planned
-  "to month". Positive means late.
+- **Slip**: for each timetable task, the quarter in which the matching stage first reaches 100% minus the
+  quarter its planned "to month" falls in. Positive means late. It's in quarters because that is all the
+  reports can tell us.
+- Besides the stall rule, Experiment 6 also reports **timetable slip** (some task at least one quarter
+  past its planned quarter and not finished) and **stall or slip**, plus how many extensions were flagged
+  at least one report before the planned end ("detected early").
 - **Bottleneck distribution**: for each completed grant, the stage of its longest stall (ties go to the
   earlier stage), with counts out of all completed grants.
 - **Extension prediction**, on completed grants only:
@@ -201,3 +206,6 @@ tests against textbook examples, so we don't need statsmodels. **SciPy is not pi
 | Date | Change | Reason |
 |---|---|---|
 | 2026-10-30 | First version | |
+| 2026-10-31 | Stall rule: the stage also has to be below 100% at the current report | First run counted stages going 95 → 100 as stalled. That is a stage finishing, a bug in how we wrote the rule, not a threshold change. Tolerance (5 points) unchanged |
+| 2026-10-31 | Slip measured in quarters instead of months | Reports are quarterly, so a month-level slip was always off by up to 2 months |
+| 2026-10-31 | Added "timetable slip" and "stall or slip" rows and a "detected early" column to Experiment 6 | Stall alone misses grants that stop before a stage starts (0%), and some flags came at the last planned report (0 months lead). The main rule and its numbers are unchanged and still reported first |

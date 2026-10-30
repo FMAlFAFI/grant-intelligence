@@ -27,6 +27,11 @@ class Config:
     CONFIDENCE_LEVEL = float(os.getenv("CONFIDENCE_LEVEL", "0.95"))
     BOOTSTRAP_RESAMPLES = int(os.getenv("BOOTSTRAP_RESAMPLES", "10000"))
 
+    # Progress and stall detection (docs/statistics-methodology.md); fixed before running on any data
+    REPORT_INTERVAL_MONTHS = int(os.getenv("REPORT_INTERVAL_MONTHS", "3"))  # quarterly reports
+    STALL_TOLERANCE = float(os.getenv("STALL_TOLERANCE", "5"))  # max points gained and still stalled
+    STALL_MIN_REPORTS = int(os.getenv("STALL_MIN_REPORTS", "1"))  # reports in a row before an alert
+
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
