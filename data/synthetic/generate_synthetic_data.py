@@ -2,11 +2,14 @@
 
 Everything produced here is invented: names, titles, scores, papers and DOIs.
 Run:  python generate_synthetic_data.py --out synthetic-data --seed 42
+Then: python generate_synthetic_data.py --out synthetic-data --seed 2026 --base synthetic-data
+          --per-round 70 65 65 --start-index 31 36 36
 Needs: python-docx
 """
 import argparse
 import csv
 import random
+import shutil
 from pathlib import Path
 
 from docx import Document
@@ -531,22 +534,84 @@ def write_final(rng, rec, out, paper_rows):
     rec.update(actual_pubs=n_pubs, output_drift=int(drift))
 
 
+GRANT_COLUMNS = ["grant_id", "round", "year", "lang", "type", "college", "department", "budget", "planned_months",
+                 "team_size", "claimed_priority", "content_priority", "claim_matches_content", "ambiguous",
+                 "assessment", "n_reviews", "mean_review_total", "funded", "completed", "extended", "actual_months",
+                 "stall_stage", "stall_quarters", "n_expected_pubs", "actual_pubs", "output_drift", "prior_pubs",
+                 "equipment_share", "missing_fields"]
+TRUTH_FILES = ["grants.csv", "reviews.csv", "progress.csv", "papers.csv"]
+RAW_FOLDERS = ["proposals", "assessments", "reviews", "progress_reports", "final_reports"]
+
+
+def grant_row(g):
+    row = {k: g.get(k, "") for k in GRANT_COLUMNS}
+    row["college"] = COLLEGES[g["college"]][0]
+    row["department"] = COLLEGES[g["college"]][2][g["dept"]]
+    row["claimed_priority"] = PRIORITIES[g["claimed_priority"]][0]
+    row["content_priority"] = PRIORITIES[g["content_priority"]][0]
+    return row
+
+
+def read_truth(folder, name):
+    path = folder / "ground_truth" / name
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return list(csv.DictReader(f))
+
+
+def write_truth(path, rows, columns=None):
+    if not rows:
+        return
+    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.DictWriter(f, fieldnames=columns or list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+
+
+def copy_base(base, out):
+    if base.resolve() == out.resolve():
+        return 0
+    copied = 0
+    for d in RAW_FOLDERS:
+        for src in sorted((base / "raw" / d).glob("*.docx")):
+            shutil.copy2(src, out / "raw" / d / src.name)
+            copied += 1
+    return copied
+
+
+def base_index_ok(base_grants, starts):
+    taken = {g["grant_id"] for g in base_grants}
+    for rnd, first in zip((1, 2, 3), starts):
+        clash = f"NAUSS-{ROUNDS[rnd] % 100}-R{rnd:02d}-{first:03d}"
+        if clash in taken:
+            raise SystemExit(f"{clash} already exists in the base set, raise --start-index")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="synthetic-data")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--per-round", type=int, nargs=3, default=[30, 35, 35])
+    ap.add_argument("--start-index", type=int, nargs=3, default=[1, 1, 1])
+    ap.add_argument("--base", type=Path, default=None)
     args = ap.parse_args()
     rng = random.Random(args.seed)
     out = Path(args.out)
     raw = out / "raw"
-    for d in ["proposals", "assessments", "reviews", "progress_reports", "final_reports"]:
+    for d in RAW_FOLDERS:
         (raw / d).mkdir(parents=True, exist_ok=True)
     (out / "ground_truth").mkdir(parents=True, exist_ok=True)
 
+    base_rows = {name: [] for name in TRUTH_FILES}
+    if args.base:
+        base_rows = {name: read_truth(args.base, name) for name in TRUTH_FILES}
+        base_index_ok(base_rows["grants.csv"], args.start_index)
+        print(f"copied {copy_base(args.base, out)} base files from {args.base}")
+
     grants, reviews, progress, papers = [], [], [], []
-    for rnd, n in zip((1, 2, 3), args.per_round):
-        for i in range(1, n + 1):
+    for rnd, n, first in zip((1, 2, 3), args.per_round, args.start_index):
+        for i in range(first, first + n):
             rec = proposal_record(rng, i, rnd)
             write_proposal(rng, rec, raw)
             write_assessment(rng, rec, raw)
@@ -562,28 +627,18 @@ def main():
                     write_final(rng, rec, raw, papers)
             grants.append(rec)
 
-    col_names = ["grant_id", "round", "year", "lang", "type", "college", "department", "budget", "planned_months",
-                 "team_size", "claimed_priority", "content_priority", "claim_matches_content", "ambiguous",
-                 "assessment", "n_reviews", "mean_review_total", "funded", "completed", "extended", "actual_months",
-                 "stall_stage", "stall_quarters", "n_expected_pubs", "actual_pubs", "output_drift", "prior_pubs",
-                 "equipment_share", "missing_fields"]
-    with open(out / "ground_truth" / "grants.csv", "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=col_names)
-        w.writeheader()
-        for g in grants:
-            row = {k: g.get(k, "") for k in col_names}
-            row["college"] = COLLEGES[g["college"]][0]
-            row["department"] = COLLEGES[g["college"]][2][g["dept"]]
-            row["claimed_priority"] = PRIORITIES[g["claimed_priority"]][0]
-            row["content_priority"] = PRIORITIES[g["content_priority"]][0]
-            w.writerow(row)
-    for name, rows in [("reviews.csv", reviews), ("progress.csv", progress), ("papers.csv", papers)]:
-        if rows:
-            with open(out / "ground_truth" / name, "w", newline="", encoding="utf-8-sig") as f:
-                w = csv.DictWriter(f, fieldnames=list(rows[0]))
-                w.writeheader()
-                w.writerows(rows)
-    print(f"grants={len(grants)} reviews={len(reviews)} progress_reports={len(progress)} papers={len(papers)}")
+    new_rows = {"grants.csv": [grant_row(g) for g in grants], "reviews.csv": reviews,
+                "progress.csv": progress, "papers.csv": papers}
+    for name in TRUTH_FILES:
+        rows = base_rows[name] + [{k: ("" if v is None else v) for k, v in r.items()} for r in new_rows[name]]
+        rows.sort(key=lambda r: tuple(str(r.get(k, "")) for k in ("grant_id", "review_id", "quarter")))
+        if name == "progress.csv":
+            rows.sort(key=lambda r: (r["grant_id"], int(r["quarter"])))
+        columns = GRANT_COLUMNS if name == "grants.csv" else (list(rows[0]) if rows else None)
+        write_truth(out / "ground_truth" / name, rows, columns)
+    total = len(base_rows["grants.csv"]) + len(grants)
+    print(f"new: grants={len(grants)} reviews={len(reviews)} progress_reports={len(progress)} papers={len(papers)}")
+    print(f"total grants in {out}: {total}")
 
 
 if __name__ == "__main__":
