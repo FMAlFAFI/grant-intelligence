@@ -28,11 +28,11 @@ def main():
             "Step 0b: Installing pytest library"
         ),
         (
-            "python -m data.synthetic.generate_synthetic_data --out data/synthetic --seed 42 --per-round 100 100 100",
+            "python -m scripts.generate_synthetic_data --out data/synthetic --seed 42 --per-round 100 100 100",
             "Step 1: Generating standard synthetic data (300 Grants)"
         ),
         (
-            "python -m data.synthetic.generate_hard_proposals",
+            "python -m scripts.generate_hard_proposals",
             "Step 2: Generating hard edge-case proposals"
         ),
         (
