@@ -18,13 +18,14 @@ def main():
     print("Starting Grant Intelligence Pipeline Prep...")
 
     commands = [
-        (["python", "inspect_proposals.py"], "[1/7] Inspecting proposals"),
-        (["python", "-m", "app.progress.progress_trajectories"], "[2/7] Calculating progress trajectories"),
-        (["python", "-m", "app.ingestion.pseudonymiser"], "[3/7] Running pseudonymiser"),
-        (["python", "-m", "app.progress.stall_report"], "[4/7] Generating stall report"),
-        (["python", "-m", "ingestion.grant_register"], "[5/7] Building grant register"),
-        (["python", "-m", "classification.portfolio_map"], "[6/7] Generating portfolio map"),
-        (["python", "-m", "classification.evaluate_priorities", "--method", "embedding"], "[7/7] Evaluating priorities (Embedding)")
+        (["python", "inspect_proposals.py"], "[1/8] Inspecting proposals"),
+        (["python", "-m", "app.progress.progress_trajectories"], "[2/8] Calculating progress trajectories"),
+        (["python", "-m", "app.ingestion.pseudonymiser"], "[3/8] Running pseudonymiser"),
+        (["python", "-m", "app.progress.stall_report"], "[4/8] Generating stall report"),
+        (["python", "-m", "ingestion.grant_register"], "[5/8] Building grant register"),
+        (["python", "-m", "classification.portfolio_map"], "[6/8] Generating portfolio map"),
+        (["python", "-m", "classification.evaluate_priorities", "--method", "embedding"], "[7/8] Evaluating priorities (Embedding)"),
+        (["python", "-m", "app.drift.drift_calculator"], "[8/8] Calculating Semantic Drift (Qwen)")
     ]
 
     for cmd, name in commands:
