@@ -5,13 +5,12 @@ __pycache__/
 venv/
 
 # Data & Logs (Rule 1.9)
+*.csv
+!data/**/*.csv
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-*.csv
-!data/synthetic/**/*.csv
-!data/synthetic_hard/**/*.csv
 *.log
 
 # Models & Cache (Rule 1.5 & 1.9)
