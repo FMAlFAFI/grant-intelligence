@@ -23,7 +23,7 @@ method = METHODS[left.selectbox("Method", list(METHODS), key="priority_method")]
 dataset = DATASETS[middle.selectbox("Proposal set", list(DATASETS), key="priority_dataset")]
 subset = SUBSETS[right.selectbox("Language", list(SUBSETS), key="priority_subset")]
 if dataset == "hard":
-    st.info("The hard set reuses the grant ids with rewritten texts (data/synthetic_hard). "
+    st.info("The hard set reuses the grant ids with rewritten texts (data/synthetic/hard). "
             "Opening a record shows the standard forms.", icon=":material/info:")
 
 metrics = guarded(load_metrics, method, dataset)

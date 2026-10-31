@@ -79,7 +79,7 @@ def load_generator():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", default="data/synthetic_hard")
+    parser.add_argument("--out", default="data/synthetic/hard")
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--n", type=int, default=100)
     parser.add_argument("--mixed-share", type=float, default=0.4)
