@@ -1,7 +1,7 @@
 import streamlit as st
 
 from dashboard.components.charts import plan_chart
-from dashboard.components.notices import guarded, missing_outputs
+from dashboard.components.notices import guarded, missing_outputs, page_help
 from dashboard.components.rtl import labelled
 from dashboard.components.source_viewer import source_viewer
 from dashboard.components.status_badge import badge
@@ -20,6 +20,8 @@ def selected_grant(ids):
     return grant_id
 
 
+page_help("Everything about one project. Pick it in the list below, or open it from Projects or Alerts. "
+          "Read the coloured labels first, then compare the plan with what really happened.")
 register = load_register()
 missing = missing_outputs(progress_outputs())
 tracker = load_tracker().set_index("grant_id")

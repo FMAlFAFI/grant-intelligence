@@ -40,14 +40,14 @@ pick them up as automatic pages and run each one without the global filters.
 | Section | Page | What it shows | Reads |
 |---|---|---|---|
 | Follow-up | Portfolio at a glance | Five big numbers, the path from proposal to final report, one bar per round | `results/register/` |
-| Follow-up | Projects | One line per funded grant with its health light, most urgent first, and a CSV download | register, `data/processed/` |
+| Follow-up | Projects | All 300 proposals with status and health, running projects needing attention first, filters and a CSV download | register, `data/processed/` |
 | Follow-up | Project file | One grant: plan against reality, stages that stopped moving, extension check, documents | all of them |
 | Follow-up | Alerts | Running grants to check on, each with its reason in one sentence | `data/processed/` |
 | Analysis | Portfolio map | What the portfolio covers | `results/portfolio_map/` |
 | Analysis | Priority check | Does each proposal match the priority it claims? | `results/priority_*` |
 | Analysis | Drift | Short notice until the drift results exist | `results/drift/` |
 
-The sidebar filters by funding round and college on every page. The documents listed on
+Every page opens with a short note on what it shows, and the first page lists all the menus. The sidebar filters by funding round and college on every page. The documents listed on
 the Project file come from `data/processed/pseudonymised`, so no researcher name is shown.
 
 ## The health light

@@ -3,7 +3,7 @@ import streamlit as st
 
 from dashboard.components.charts import heatmap
 from dashboard.components.kpi import tile, tile_row, value_tile
-from dashboard.components.notices import guarded
+from dashboard.components.notices import guarded, page_help
 from dashboard.components.proposal_table import proposal_table
 from dashboard.data.loaders import (
     PRIORITY_ORDER, load_claim_disagreements, load_metrics, load_predictions, macro_f1,
@@ -16,7 +16,8 @@ TABLE_COLUMNS = ["grant_id", "lang", "claimed_priority", "predicted_priority", "
                  "similarity", "margin"]
 
 st.title("Priority check")
-st.caption("Does each proposal match the priority it claims? Classifier quality first, then the claims.")
+page_help("Does each proposal really match the priority it claims? The classifier reads the text and picks a priority. "
+          "The first numbers show how reliable it is, the list at the end shows the proposals to check by hand.")
 
 left, middle, right = st.columns(3)
 method = METHODS[left.selectbox("Method", list(METHODS), key="priority_method")]

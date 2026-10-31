@@ -4,6 +4,17 @@ from dashboard.data.contracts import ContractError
 from dashboard.data.loaders import MissingOutput
 
 
+def page_help(text):
+    st.info(text, icon=":material/help:")
+
+
+def health_legend():
+    st.caption("🟢 **On track**: nothing to report. 🟠 **Watch**: a stage stopped moving in the latest report. "
+               "🔴 **Late**: a stage is past its planned end, or the grant needed more time than planned. "
+               "**—**: not funded, so there is nothing to follow. "
+               "A light is a prompt to talk to the team, not a judgement of the researchers.")
+
+
 def show_problem(error):
     if isinstance(error, MissingOutput):
         st.warning(f"Missing output: `{error.path.name}`. Run this from the repo root, then reload:\n\n"

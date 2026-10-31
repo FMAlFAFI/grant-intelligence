@@ -2,12 +2,13 @@ import streamlit as st
 
 from dashboard.components.charts import histogram
 from dashboard.components.kpi import tile, tile_row
+from dashboard.components.notices import page_help
 from dashboard.components.proposal_table import proposal_table
 from dashboard.data.adapters import load_drift
 from dashboard.data.loaders import load_register
 
 st.title("Proposal to output drift")
-st.caption("Did we fund what was proposed? Compares the proposal with the papers it produced.")
+page_help("Did we fund what was proposed? This page will compare each proposal with the papers it produced.")
 
 drift = load_drift()
 if not drift.ready:

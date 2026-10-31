@@ -8,6 +8,7 @@ WATCH = "Watch"
 ON_TRACK = "On track"
 HEALTHS = [LATE, WATCH, ON_TRACK]
 HEALTH_LABELS = {LATE: "🔴 Late", WATCH: "🟠 Watch", ON_TRACK: "🟢 On track"}
+NO_HEALTH = "—"
 HEALTH_COLORS = {LATE: "red", WATCH: "orange", ON_TRACK: "green"}
 RUNNING_STATUSES = [RUNNING, OVERDUE]
 FINISHED_STATUSES = [COMPLETED, COMPLETED_LATE]
@@ -85,6 +86,20 @@ def build_tracker(register, episodes, slip):
     ]
     funded["rank"] = funded["health"].map(HEALTHS.index)
     return funded.sort_values(["rank", "grant_id"]).drop(columns="rank").reset_index(drop=True)
+
+
+def all_projects(register, tracker):
+    others = register[register["funded"] != 1].assign(health="", health_label=NO_HEALTH, reason="", months="")
+    frame = pd.concat([tracker, others], ignore_index=True)
+    frame["group"] = frame["status"].map(status_group)
+    frame["rank"] = frame["health"].map(lambda health: HEALTHS.index(health) if health in HEALTHS else len(HEALTHS))
+    return frame.sort_values(["group", "rank", "grant_id"]).drop(columns=["group", "rank"]).reset_index(drop=True)
+
+
+def status_group(status):
+    if status in RUNNING_STATUSES:
+        return 0
+    return 1 if status in FINISHED_STATUSES else 2
 
 
 def needs_attention(tracker):

@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.components.charts import bar_chart
-from dashboard.components.notices import guarded
+from dashboard.components.notices import guarded, page_help
 from dashboard.components.proposal_table import proposal_table
 from dashboard.data.loaders import PRIORITY_ORDER, load_proposals
 
@@ -17,8 +17,9 @@ DIMENSIONS = {
 TABLE_COLUMNS = ["grant_id", "round", "lang", "college", "department", "type", "claimed_priority",
                  "predicted_priority", "funded"]
 
-st.title("Portfolio")
-st.caption("What the portfolio covers. From results/portfolio_map/proposals.csv (classification/portfolio_map.py).")
+st.title("Portfolio map")
+page_help("What the proposals are about. Choose how to group them, each bar shows how many proposals fall in that "
+          "group. Click a bar to list them.")
 
 proposals = guarded(load_proposals)
 if proposals is None:

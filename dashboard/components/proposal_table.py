@@ -47,7 +47,7 @@ def open_detail(grant_id):
     st.switch_page(DETAIL_PAGE, query_params={"grant_id": grant_id})
 
 
-def proposal_table(frame, key, columns, caption=None):
+def proposal_table(frame, key, columns, caption=None, height="auto"):
     shown = [column for column in columns if column in frame.columns]
     if caption:
         st.caption(caption)
@@ -65,11 +65,12 @@ def proposal_table(frame, key, columns, caption=None):
         key=key,
         hide_index=True,
         width="stretch",
+        height=height,
         column_config={column: config[column] for column in shown},
         on_select="rerun",
         selection_mode="single-row",
     )
-    st.caption(f"{len(frame)} grants. Select a row to open its project file.")
+    st.caption("Select a line to open its project file.")
     rows = event.selection.rows if event and event.selection else []
     if rows:
         open_detail(frame.iloc[rows[0]]["grant_id"])

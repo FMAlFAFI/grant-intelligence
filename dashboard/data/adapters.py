@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.data.contracts import CONTRACTS, missing_columns
-from dashboard.data.health import build_tracker
+from dashboard.data.health import all_projects, build_tracker
 from dashboard.data.loaders import load_register, settings
 from dashboard.settings import ROOT
 
@@ -77,6 +77,11 @@ def progress_outputs():
 @st.cache_data
 def load_tracker():
     return build_tracker(load_register(), load_stalls().frame, load_slip().frame)
+
+
+@st.cache_data
+def load_all_projects():
+    return all_projects(load_register(), load_tracker())
 
 
 @st.cache_data
