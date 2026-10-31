@@ -1,0 +1,37 @@
+version: 1
+raw_dir: data/processed/pseudonymised
+register: results/register/grants_register.csv
+progress_history: results/register/progress_history.csv
+portfolio_dir: results/portfolio_map
+priority_runs:
+  embedding:
+    standard: results/priority_embedding
+    hard: results/priority_embedding_hard
+  keyword:
+    standard: results/priority_keyword
+    hard: results/priority_keyword_hard
+team_outputs:
+  trajectories:
+    owner: Member C
+    file: data/processed/progress_trajectories.csv
+    produced_by: python -m app.progress.progress_trajectories
+  timetables:
+    owner: Member C
+    file: data/processed/planned_timetables.csv
+    produced_by: python inspect_proposals.py
+  drift:
+    owner: Member B
+    file: results/drift/drift_scores.csv
+    produced_by: the drift module (not on main yet)
+  stalls:
+    owner: Member D
+    file: data/processed/stall_episodes.csv
+    produced_by: python -m app.progress.stall_report
+  slip:
+    owner: Member D
+    file: data/processed/timetable_slip.csv
+    produced_by: python -m app.progress.stall_report
+  extensions:
+    owner: Member D
+    file: data/processed/extension_predictions.csv
+    produced_by: python -m app.progress.stall_report
