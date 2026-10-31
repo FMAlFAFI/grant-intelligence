@@ -1,9 +1,13 @@
 import streamlit as st
 
-DETAIL_PAGE = "views/proposal_detail.py"
+DETAIL_PAGE = "views/project_file.py"
 
 COLUMN_LABELS = {
     "grant_id": "Grant",
+    "title": "Title",
+    "round_label": "Round",
+    "health_label": "Health",
+    "months": "Time used",
     "year": "Round",
     "lang": "Lang",
     "college": "College",
@@ -13,7 +17,7 @@ COLUMN_LABELS = {
     "funded": "Funded",
     "status": "Status",
     "current_stage_name": "Current stage",
-    "overall_progress": "Progress %",
+    "overall_progress": "% done",
     "reports": "Reports",
     "spent_share": "Budget spent",
     "claimed_priority": "Claimed priority",
@@ -51,9 +55,11 @@ def proposal_table(frame, key, columns, caption=None):
         st.info("No grants match this selection.")
         return
     config = {column: COLUMN_LABELS.get(column, column) for column in shown}
-    config["overall_progress"] = st.column_config.ProgressColumn("Progress %", min_value=0, max_value=100, format="%.0f%%")
+    config["overall_progress"] = st.column_config.ProgressColumn("% done", min_value=0, max_value=100, format="%.0f%%",
+                                                                 width="small")
     config["spent_share"] = st.column_config.NumberColumn("Budget spent", format="percent")
     config["funded"] = st.column_config.CheckboxColumn("Funded")
+    config["title"] = st.column_config.TextColumn("Title", width="medium")
     event = st.dataframe(
         frame[shown],
         key=key,
@@ -63,7 +69,7 @@ def proposal_table(frame, key, columns, caption=None):
         on_select="rerun",
         selection_mode="single-row",
     )
-    st.caption(f"{len(frame)} grants. Select a row to open its record.")
+    st.caption(f"{len(frame)} grants. Select a row to open its project file.")
     rows = event.selection.rows if event and event.selection else []
     if rows:
         open_detail(frame.iloc[rows[0]]["grant_id"])

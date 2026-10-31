@@ -7,12 +7,12 @@ from dashboard.data.sources import document_lines, sources_for
 def source_viewer(grant_id):
     sources = sources_for(grant_id)
     if not sources:
-        st.info("No Word files found for this grant in the raw data folder.")
+        st.info("No documents found for this grant. Run `python -m app.ingestion.pseudonymiser` to prepare them.")
         return
     private = [source for source in sources if source["private"]]
     if private:
-        st.caption(f"{len(private)} reviewer forms exist. They are not shown: individual reviewer scores "
-                   "and comments stay private, only the mean appears above.")
+        st.caption(f"Reviewer forms: {len(private)}. They are not shown, because individual reviewer scores "
+                   "and comments stay private.")
     for number, source in enumerate(source for source in sources if not source["private"]):
         path = source["path"]
         with st.expander(f"{source['label']}: {path.name}"):

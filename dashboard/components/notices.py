@@ -23,10 +23,10 @@ def guarded(loader, *args):
         return None
 
 
-def pending_panel(output, title, will_show):
-    with st.container(border=True):
-        st.subheader(f":material/hourglass_top: {title}: not finished yet")
-        st.markdown(f"Owner: **{output.owner}**. Its output is not on `main` yet. What is missing:")
-        st.markdown("\n".join(f"- {item}" for item in output.missing))
-        st.markdown("When the file is in place this page will show:")
-        st.markdown("\n".join(f"- {item}" for item in will_show))
+def missing_outputs(outputs):
+    commands = sorted({output.command for output in outputs if not output.ready})
+    if not commands:
+        return False
+    st.warning("Run this from the repo root, then reload the page:\n\n```\n" + "\n".join(commands) + "\n```",
+               title="The progress results are not there yet", icon=":material/folder_off:")
+    return True

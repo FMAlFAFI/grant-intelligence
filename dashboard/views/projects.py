@@ -1,81 +1,39 @@
-import pandas as pd
 import streamlit as st
 
-from dashboard.components.charts import funnel_chart, status_by_round_chart
-from dashboard.components.kpi import tile, tile_row
-from dashboard.components.proposal_table import proposal_table
-from dashboard.data.loaders import load_register
-from ingestion.grant_register import COMPLETED, COMPLETED_LATE, OVERDUE, RUNNING, STATUSES
+from dashboard.components.notices import missing_outputs
+from dashboard.components.proposal_table import COLUMN_LABELS, proposal_table
+from dashboard.data.adapters import load_tracker, progress_outputs
+from dashboard.data.health import FINISHED_STATUSES, HEALTHS, RUNNING_STATUSES
 
-TABLE_COLUMNS = ["grant_id", "year", "lang", "college", "type", "assessment", "mean_review_total", "funded",
-                 "status", "current_stage_name", "overall_progress", "reports", "spent_share"]
+TABLE_COLUMNS = ["health_label", "grant_id", "title", "college", "round_label", "current_stage_name",
+                 "overall_progress", "months"]
+EXPORT_COLUMNS = ["health", *TABLE_COLUMNS[1:], "status", "reason"]
+GROUPS = {"Running": RUNNING_STATUSES, "Completed": FINISHED_STATUSES}
 
+st.title("Projects")
+st.caption("One line per funded grant, most urgent first.")
 
-def with_display_columns(frame):
-    frame = frame.copy()
-    frame["round_name"] = frame.apply(lambda row: f"Round {row['round']} ({row['year']})", axis=1)
-    frame["reports"] = frame.apply(
-        lambda row: f"{row['reports_received']} / {row['reports_planned']}" if row["funded"] else "", axis=1)
-    return frame
+if missing_outputs(progress_outputs()):
+    st.stop()
 
-
-def funnel_steps(frame):
-    steps = [
-        ("Submitted", frame),
-        ("Passed initial assessment", frame[frame["assessment"] != "reject"]),
-        ("Peer reviewed", frame[frame["n_reviews"] > 0]),
-        ("Funded", frame[frame["funded"] == 1]),
-        ("Final report received", frame[frame["final_report"] == 1]),
-    ]
-    return steps
-
-
-st.title("Project tracking")
-st.caption("Where each grant stands, from submission to the final report. "
-           "Read from the Word forms by ingestion/grant_register.py.")
-
-frame = with_display_columns(st.session_state["filters"].apply(load_register()))
-funded = frame[frame["funded"] == 1]
-
-columns = tile_row(5)
-with columns[0]:
-    tile("Submitted", len(frame), len(frame), "proposals in view")
-with columns[1]:
-    tile("Funded", len(funded), len(frame), None)
-with columns[2]:
-    running = funded["status"].isin([RUNNING, OVERDUE]).sum()
-    tile("Still running", int(running), len(funded), f"of {len(funded)} funded")
-with columns[3]:
-    done = funded["status"].isin([COMPLETED, COMPLETED_LATE]).sum()
-    tile("Completed", int(done), len(funded), f"of {len(funded)} funded")
-with columns[4]:
-    tile("Extended", int(funded["extended"].sum()), len(funded), f"of {len(funded)} funded")
-
-left, right = st.columns(2, gap="large")
+tracker = st.session_state["filters"].apply(load_tracker())
+left, right = st.columns(2, vertical_alignment="bottom")
 with left:
-    st.subheader("From submission to final report")
-    steps = funnel_steps(frame)
-    chosen = funnel_chart(pd.DataFrame({"step": [name for name, _ in steps],
-                                        "count": [len(rows) for _, rows in steps]}), key="funnel")
+    group = st.segmented_control("Show", [*GROUPS, "All"], default="Running", key="projects_group")
 with right:
-    st.subheader("Status by funding round")
-    cells = status_by_round_chart(frame, key="status_round")
+    healths = st.pills("Health", HEALTHS, selection_mode="multi", default=[], key="projects_health")
 
-if chosen:
-    rows = dict(steps)[chosen[0]]
-    st.markdown(f"**{chosen[0]}**")
-    proposal_table(rows, "funnel_table", TABLE_COLUMNS)
-if cells:
-    cell = cells[0]
-    rows = frame
-    if "round_name" in cell:
-        rows = rows[rows["round_name"] == cell["round_name"]]
-    if "status" in cell:
-        rows = rows[rows["status"] == cell["status"]]
-    st.markdown(f"**{cell.get('round_name', 'All rounds')}, {cell.get('status', 'all statuses')}**")
-    proposal_table(rows, "status_table", TABLE_COLUMNS)
+rows = tracker[tracker["status"].isin(GROUPS[group])] if group in GROUPS else tracker
+if healths:
+    rows = rows[rows["health"].isin(healths)]
 
-st.subheader("All grants")
-statuses = st.multiselect("Status", STATUSES, default=[], placeholder="All statuses", key="status_filter")
-rows = frame[frame["status"].isin(statuses)] if statuses else frame
-proposal_table(rows.sort_values(["year", "grant_id"]), "all_table", TABLE_COLUMNS)
+rows = rows.assign(college=rows["college"].str.removeprefix("College of "),
+                   round_label=rows["round_label"].str.split(" (", regex=False).str[0])
+proposal_table(rows, "projects_table", TABLE_COLUMNS)
+st.caption("**On track**: nothing to report. **Watch**: a stage stopped moving in the latest report. "
+           "**Late**: a stage is past its planned end, or the grant went past its planned end date. "
+           "These are prompts to check in with the team, not a judgement of the researchers.")
+
+export = rows[EXPORT_COLUMNS].rename(columns={**COLUMN_LABELS, "health": "Health", "reason": "Reason"})
+st.download_button("Download this list (CSV)", export.to_csv(index=False).encode("utf-8-sig"),
+                   file_name="projects.csv", mime="text/csv", icon=":material/download:")

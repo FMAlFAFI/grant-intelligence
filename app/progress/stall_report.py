@@ -183,7 +183,7 @@ def render(trajectories, outcomes, episodes, slip, experiment, cfg, sources):
         "- The stage names come from the synthetic forms. The brief lists different ones (pre-data collection, "
         "writing first and final version, review stage, publication stage), so the mapping would need "
         "updating for the real form.",
-        "- The `stall_stage` column in the synthetic answer key does not match the reports for 11 of its 25 "
+        "- The `stall_stage` column in the synthetic answer key does not match the reports for 36 of its 84 "
         "grants (they never stop moving), so the detector is checked against the reports instead, see "
         "`tests/test_stall_detector.py`.",
     ]

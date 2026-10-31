@@ -54,4 +54,4 @@ def test_outcomes_from_final_reports_match_the_answer_key():
     with (DATA / "ground_truth" / "grants.csv").open(encoding="utf-8-sig") as f:
         truth = {r["grant_id"]: r["extended"] in ("1", "True") for r in csv.DictReader(f) if r["completed"] in ("1", "True")}
     assert outcomes == truth
-    assert len(outcomes) == 48 and sum(outcomes.values()) == 24
+    assert len(outcomes) == 142 and sum(outcomes.values()) == 68

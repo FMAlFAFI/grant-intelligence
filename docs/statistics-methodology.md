@@ -171,7 +171,7 @@ Thresholds fixed now, before running it on any data:
   - All three are reported together with Wilson CIs.
   - The synthetic data has no extension request dates, so lead time is measured to the planned end
     rather than to the request.
-- Known problem with the synthetic answer key: of the 25 grants with a `stall_stage`, only 14
+- Known problem with the synthetic answer key: of the 84 grants with a `stall_stage`, only 48
   actually stop moving in their progress reports. We evaluate against stalls found in the reports, not
   the `stall_stage` column, and say so.
 

@@ -1,5 +1,5 @@
 version: 1
-raw_dir: data/synthetic/raw
+raw_dir: data/processed/pseudonymised
 register: results/register/grants_register.csv
 progress_history: results/register/progress_history.csv
 portfolio_dir: results/portfolio_map
@@ -20,10 +20,18 @@ team_outputs:
     file: data/processed/planned_timetables.csv
     produced_by: python inspect_proposals.py
   drift:
-    owner: not assigned on main yet
+    owner: Member B
     file: results/drift/drift_scores.csv
     produced_by: the drift module (not on main yet)
   stalls:
-    owner: not assigned on main yet
-    file: results/progress/stall_alerts.csv
-    produced_by: the stall detector (not on main yet)
+    owner: Member D
+    file: data/processed/stall_episodes.csv
+    produced_by: python -m app.progress.stall_report
+  slip:
+    owner: Member D
+    file: data/processed/timetable_slip.csv
+    produced_by: python -m app.progress.stall_report
+  extensions:
+    owner: Member D
+    file: data/processed/extension_predictions.csv
+    produced_by: python -m app.progress.stall_report

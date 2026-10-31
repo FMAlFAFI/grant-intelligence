@@ -12,12 +12,12 @@ GRID = "#e4e3df"
 SEQUENTIAL = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
 
 
-def styled(chart, height):
+def styled(chart, height, legend_columns=3):
     return (chart.properties(height=height)
             .configure_view(strokeWidth=0)
             .configure_axis(gridColor=GRID, domainColor=GRID, tickColor=GRID, labelColor=INK_SECONDARY,
                             titleColor=INK_SECONDARY, labelFontSize=11, titleFontSize=11, labelLimit=260)
-            .configure_legend(labelColor=INK_SECONDARY, titleColor=INK_SECONDARY, orient="bottom", columns=3,
+            .configure_legend(labelColor=INK_SECONDARY, titleColor=INK_SECONDARY, orient="bottom", columns=legend_columns,
                               labelLimit=220))
 
 
@@ -81,7 +81,8 @@ def status_by_round_chart(frame, key=None):
         tooltip=[alt.Tooltip("round_name:N", title="Round"), alt.Tooltip("status:N", title="Status"),
                  alt.Tooltip("label:N", title="Grants")],
     ).transform_calculate(status_rank=status_rank_expression()).add_params(pick)
-    event = st.altair_chart(styled(chart, 48 * len(totals)), key=key, on_select="rerun", width="stretch")
+    event = st.altair_chart(styled(chart, 48 * len(totals) + 130, legend_columns=2), key=key, on_select="rerun",
+                            width="stretch")
     return picked(event, "pick")
 
 
@@ -170,3 +171,19 @@ def stacked_states(frame, category, state, order, colors, key=None, title="Stage
     ).add_params(pick)
     event = st.altair_chart(styled(chart, 40 * len(totals) + 40), key=key, on_select="rerun", width="stretch")
     return picked(event, "pick")
+
+
+def plan_chart(plan):
+    data = plan[["stage_name", "planned_quarter", "done_quarter", "last_quarter", "result"]].copy()
+    data["reached"] = data["done_quarter"].fillna(data["last_quarter"])
+    order = list(data["stage_name"])
+    base = alt.Chart(data).encode(y=alt.Y("stage_name:N", sort=order, title=None, axis=alt.Axis(labelOverlap=False)))
+    tooltip = [alt.Tooltip("stage_name:N", title="Stage"), alt.Tooltip("result:N", title="Result")]
+    link = base.mark_rule(color=MUTED, strokeWidth=2).encode(
+        x=alt.X("planned_quarter:Q", title="Quarter", axis=alt.Axis(tickMinStep=1), scale=alt.Scale(zero=False, nice=False)),
+        x2="reached:Q")
+    planned = base.mark_point(size=90, color=INK_SECONDARY, filled=False, strokeWidth=2).encode(
+        x="planned_quarter:Q", tooltip=tooltip)
+    actual = alt.Chart(data[data["done_quarter"].notna()]).mark_point(size=90, color=SERIES, filled=True).encode(
+        x="done_quarter:Q", y=alt.Y("stage_name:N", sort=order, title=None), tooltip=tooltip)
+    st.altair_chart(styled(link + planned + actual, 34 * len(data) + 50), width="stretch")

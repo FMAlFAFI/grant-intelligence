@@ -1,14 +1,18 @@
 # Dashboard
 
-One Streamlit app with a page per question of the brief, reading the CSV files the
-analysis modules write. The dashboard itself computes nothing: every number on screen
-comes from a file in `results/`, so a figure in the app can always be traced back to a
-command you can rerun.
+One Streamlit app for following the grants, written so someone managing the projects can
+read it without knowing the pipeline. It reads the CSV files the analysis modules write,
+so a figure in the app can always be traced back to a command you can rerun. The only
+thing it works out itself is the On track / Watch / Late light.
 
 ## Running it
 
 ```
 pip install -r requirements.txt
+python inspect_proposals.py
+python -m app.progress.progress_trajectories
+python -m app.ingestion.pseudonymiser
+python -m app.progress.stall_report
 python -m ingestion.grant_register
 python -m classification.portfolio_map
 python -m classification.evaluate_priorities --method embedding
@@ -33,24 +37,43 @@ pick them up as automatic pages and run each one without the global filters.
 
 ## Pages
 
-| Page | Question | Reads |
-|---|---|---|
-| Project tracking | Where does each grant stand, from submission to final report? | `results/register/` |
-| Overview | One tile per question of the brief, every number with its denominator | all of them |
-| Portfolio | What does the portfolio cover, by priority, college, round and type? | `results/portfolio_map/` |
-| Priority check | Does each proposal match the priority it claims, and is the classifier right? | `results/priority_*` |
-| Drift | Did we fund what was proposed? | `results/drift/` (not assigned yet) |
-| Progress and stalls | Where do projects get stuck, and how late are they against their own timetable? | `data/processed/` (Member C), `results/progress/` (stall detection) |
-| Proposal record | One grant: lifecycle, progress, priority, and its Word files | all of them |
+| Section | Page | What it shows | Reads |
+|---|---|---|---|
+| Follow-up | Portfolio at a glance | Five big numbers, the path from proposal to final report, one bar per round | `results/register/` |
+| Follow-up | Projects | One line per funded grant with its health light, most urgent first, and a CSV download | register, `data/processed/` |
+| Follow-up | Project file | One grant: plan against reality, stages that stopped moving, extension check, documents | all of them |
+| Follow-up | Alerts | Running grants to check on, each with its reason in one sentence | `data/processed/` |
+| Analysis | Portfolio map | What the portfolio covers | `results/portfolio_map/` |
+| Analysis | Priority check | Does each proposal match the priority it claims? | `results/priority_*` |
+| Analysis | Drift | Short notice until the drift results exist | `results/drift/` |
+
+The sidebar filters by funding round and college on every page. The documents listed on
+the Project file come from `data/processed/pseudonymised`, so no researcher name is shown.
+
+## The health light
+
+`dashboard/data/health.py` gives each funded grant one light:
+
+| Light | When |
+|---|---|
+| Late | A stage is past its planned end and unfinished, or the grant needed an extension or is running past its planned end date |
+| Watch | A running grant has a stage that stopped moving in its latest report |
+| On track | Neither |
+
+A stall on a finished grant no longer counts, because the work is over. A completed grant
+that merely raised a warning but finished on time is On track: the light says what
+happened, and the warning stays visible in its Project file. Needs attention and Alerts
+cover running grants only. A light is a prompt to talk to the team, never a judgement of
+the researchers.
 
 ## Drill-down
 
-Every figure leads to the records behind it, in four steps: a bar or a funnel step, then
-the list of grants, then one grant's record, then the Word file it was read from. The key
+Every figure leads to the records behind it: a bar or a funnel step, then the list of
+grants, then one grant's Project file, then the document it was read from. The key
 shared by every file is `grant_id`, so any selection narrows to a set of grant ids and the
 next level filters on those.
 
-The record page keeps its grant in the URL (`?grant_id=NAUSS-23-R01-006`), so a record can
+The Project file keeps its grant in the URL (`?grant_id=NAUSS-23-R01-006`), so a file can
 be shared as a link.
 
 ## Teammates' outputs
@@ -58,39 +81,18 @@ be shared as a link.
 Every file another member produces is declared under `team_outputs` in
 `config/dashboard.yaml` (owner, path, the command that writes it) and read through
 `dashboard/data/adapters.py`, which checks its columns against `contracts.py`. A missing
-file never breaks a page: the page says which file is missing, which script writes it and
-what it will show once the file exists.
+file never breaks a page: the page shows the command to run.
 
-| Output | Owner | File | State on main |
+| Output | Owner | File | State |
 |---|---|---|---|
 | Progress trajectories | Member C | `data/processed/progress_trajectories.csv` (`app/progress/progress_trajectories.py`) | ready |
 | Planned timetables | Member C | `data/processed/planned_timetables.csv` (`inspect_proposals.py`) | ready |
-| Drift | not assigned on main yet | `results/drift/drift_scores.csv`: `grant_id, similarity, threshold, drift_flag, n_papers` | missing |
-| Stall alerts | not assigned on main yet | `results/progress/stall_alerts.csv`: `grant_id, stall_stage, stall_quarters, slip_months, alert` | missing |
+| Stall episodes | Member D | `data/processed/stall_episodes.csv` (`app/progress/stall_report.py`) | ready |
+| Timetable slip | Member D | `data/processed/timetable_slip.csv` (`app/progress/stall_report.py`) | ready |
+| Extension predictions | Member D | `data/processed/extension_predictions.csv` (`app/progress/stall_report.py`) | ready |
+| Drift | Member B | `results/drift/drift_scores.csv`: `grant_id, similarity, threshold, drift_flag, n_papers` | missing |
 
 If a module produces another shape, only `adapters.py` and `contracts.py` change.
-
-### Progress against the timetable
-
-The "Progress and stalls" page puts Member C's two files side by side
-(`dashboard/data/progress.py`). For each funded grant and each of the eight stages:
-
-- the planned quarter is the quarter in which the proposal's timetable ends the stage
-  (task names are matched in Arabic or English with the labels of
-  `app/progress/progress_trajectories.py`; a row whose end month comes before its start
-  month counts its later month);
-- the finished quarter is the first quarterly report where the stage reaches 100 %;
-- a finished stage is late when it finished after its planned quarter; an unfinished stage
-  is late once the latest report is past its planned quarter;
-- "late by" is counted in quarters, because progress is only reported quarterly.
-
-On the synthetic data, 131 of 443 finished stages finished late, 21 of 45 unfinished
-stages are past their planned end, and 31 of 61 funded grants have at least one late stage.
-This is the slip against each proposal's own timetable, not stall detection, which is
-still missing.
-
-The page also checks Member C's trajectories against the grant register: both give the
-same eight percentages for 359 of 359 quarterly reports.
 
 ## The grant register
 
@@ -108,11 +110,11 @@ dashboard must show what the records say, not what the generator knows:
 
 `tests/test_grant_register.py` checks the register against
 `data/synthetic/ground_truth/grants.csv`: the decision, the number of reviewers, the mean
-total, the funding flag, completion and extension all match on the 100 synthetic grants.
+total, the funding flag, completion and extension all match on the 300 synthetic grants.
 
 ## Privacy
 
-The record page never shows an individual reviewer's scores or comments: the reviewer
+The Project file never shows an individual reviewer's scores or comments: the reviewer
 forms are listed as existing, the mean total is the only figure shown, and no reviewer
 name appears. Arabic text is rendered right to left per line, so a bilingual form reads
 the way it was written.

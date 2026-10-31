@@ -12,19 +12,19 @@ stage can stop for many reasons (ethics delay, equipment, illness) and a person 
 
 ## data
 
-359 progress reports from 61 funded grants. 48 grants are completed (have a final report), 24 of them extended. 13 are still running.
+1137 progress reports from 190 funded grants. 142 grants are completed (have a final report), 68 of them extended. 48 are still running.
 
 ## stalls
 
-13 stall episodes in **13 of 61 funded grants**.
+48 stall episodes in **48 of 190 funded grants**.
 
 | Stage | Episodes | Grants | Median length (reports) |
 |---|---|---|---|
-| Data analysis | 2 | 2 | 3 |
-| Data collection | 9 | 9 | 3 |
-| Ethics approval | 2 | 2 | 3.5 |
+| Data analysis | 4 | 4 | 3 |
+| Data collection | 28 | 28 | 3 |
+| Ethics approval | 16 | 16 | 3 |
 
-## portfolio bottleneck (n = 48 completed grants)
+## portfolio bottleneck (n = 142 completed grants)
 
 Each grant is counted once, at the stage of its longest stall.
 
@@ -32,68 +32,83 @@ Each grant is counted once, at the stage of its longest stall.
 |---|---|---|
 | Literature review | 0 | 0% |
 | Instrument design | 0 | 0% |
-| Ethics approval | 2 | 4% |
-| Data collection | 4 | 8% |
-| Data analysis | 2 | 4% |
+| Ethics approval | 9 | 6% |
+| Data collection | 16 | 11% |
+| Data analysis | 3 | 2% |
 | Writing results | 0 | 0% |
 | Paper submission | 0 | 0% |
 | Final report | 0 | 0% |
-| *No stall* | 40 | 83% |
+| *No stall* | 114 | 80% |
 
-## timetable slip (61 grants, 488 tasks)
+## timetable slip (190 grants, 1520 tasks)
 
 Slip = quarter the stage reached 100% minus the quarter it was planned to end in. Overdue = not finished and already past its planned quarter at the latest report.
 
 | Stage | Tasks | On time | Early | Late | Overdue | Not due yet | Mean slip of finished (quarters) |
 |---|---|---|---|---|---|---|---|
-| Literature review | 61 | 61 | 0 | 0 | 0 | 0 | 0.00 |
-| Instrument design | 61 | 61 | 0 | 0 | 0 | 0 | 0.00 |
-| Ethics approval | 61 | 38 | 0 | 23 | 0 | 0 | 0.49 |
-| Data collection | 61 | 24 | 20 | 13 | 3 | 1 | 0.16 |
-| Data analysis | 61 | 19 | 9 | 25 | 4 | 4 | 0.79 |
-| Writing results | 61 | 13 | 17 | 22 | 4 | 5 | 0.42 |
-| Paper submission | 61 | 14 | 12 | 24 | 5 | 6 | 0.74 |
-| Final report | 61 | 15 | 9 | 24 | 5 | 8 | 0.96 |
+| Literature review | 190 | 190 | 0 | 0 | 0 | 0 | 0.00 |
+| Instrument design | 190 | 188 | 0 | 2 | 0 | 0 | 0.01 |
+| Ethics approval | 190 | 117 | 0 | 70 | 3 | 0 | 0.56 |
+| Data collection | 190 | 68 | 62 | 46 | 10 | 4 | 0.21 |
+| Data analysis | 190 | 69 | 23 | 72 | 7 | 19 | 0.81 |
+| Writing results | 190 | 37 | 55 | 62 | 9 | 27 | 0.43 |
+| Paper submission | 190 | 45 | 34 | 67 | 11 | 33 | 0.78 |
+| Final report | 190 | 46 | 28 | 68 | 12 | 36 | 0.95 |
 
-## extension prediction (Experiment 6, n = 48 completed grants)
+## extension prediction (Experiment 6, n = 142 completed grants)
 
 Only reports up to each grant's planned end are used. Lead time = planned end minus the month of the first flag. "Early" = flagged at least one report before the planned end.
 
 | Rule | Detection rate | Detected early | False positive rate | Lead time (median) |
 |---|---|---|---|---|
-| stall, 5 points (main) | 8 of 24 (33%, 95% CI 18%-53%) | 7 of 24 (29%, 95% CI 15%-49%) | 0 of 24 (0%, 95% CI 0%-14%) | 4.5 months (range 0-12) |
-| stall, exact freeze (0 points) | 8 of 24 (33%, 95% CI 18%-53%) | 7 of 24 (29%, 95% CI 15%-49%) | 0 of 24 (0%, 95% CI 0%-14%) | 4.5 months (range 0-12) |
-| stall, 10 points | 8 of 24 (33%, 95% CI 18%-53%) | 7 of 24 (29%, 95% CI 15%-49%) | 0 of 24 (0%, 95% CI 0%-14%) | 4.5 months (range 0-12) |
-| stall, 2 reports in a row | 7 of 24 (29%, 95% CI 15%-49%) | 4 of 24 (17%, 95% CI 7%-36%) | 0 of 24 (0%, 95% CI 0%-14%) | 3 months (range 0-9) |
-| timetable slip only | 10 of 24 (42%, 95% CI 24%-61%) | 5 of 24 (21%, 95% CI 9%-40%) | 0 of 24 (0%, 95% CI 0%-14%) | 1.5 months (range 0-6) |
-| stall or timetable slip | 10 of 24 (42%, 95% CI 24%-61%) | 8 of 24 (33%, 95% CI 18%-53%) | 0 of 24 (0%, 95% CI 0%-14%) | 3 months (range 0-12) |
+| stall, 5 points (main) | 27 of 68 (40%, 95% CI 29%-52%) | 25 of 68 (37%, 95% CI 26%-49%) | 1 of 74 (1%, 95% CI 0%-7%) | 6 months (range 0-12) |
+| stall, exact freeze (0 points) | 27 of 68 (40%, 95% CI 29%-52%) | 25 of 68 (37%, 95% CI 26%-49%) | 1 of 74 (1%, 95% CI 0%-7%) | 6 months (range 0-12) |
+| stall, 10 points | 27 of 68 (40%, 95% CI 29%-52%) | 25 of 68 (37%, 95% CI 26%-49%) | 1 of 74 (1%, 95% CI 0%-7%) | 6 months (range 0-12) |
+| stall, 2 reports in a row | 25 of 68 (37%, 95% CI 26%-49%) | 21 of 68 (31%, 95% CI 21%-43%) | 1 of 74 (1%, 95% CI 0%-7%) | 3 months (range 0-9) |
+| timetable slip only | 34 of 68 (50%, 95% CI 38%-62%) | 23 of 68 (34%, 95% CI 24%-46%) | 0 of 74 (0%, 95% CI 0%-5%) | 3 months (range 0-12) |
+| stall or timetable slip | 35 of 68 (51%, 95% CI 40%-63%) | 30 of 68 (44%, 95% CI 33%-56%) | 1 of 74 (1%, 95% CI 0%-7%) | 6 months (range 0-12) |
 
-<details><summary>Extended grants the main rule missed (16)</summary>
+<details><summary>Extended grants the main rule missed (41)</summary>
 
-NAUSS-23-R01-010, NAUSS-23-R01-013, NAUSS-23-R01-021, NAUSS-23-R01-023, NAUSS-23-R01-027, NAUSS-24-R02-002, NAUSS-24-R02-009, NAUSS-24-R02-012, NAUSS-24-R02-020, NAUSS-24-R02-023, NAUSS-24-R02-025, NAUSS-24-R02-027, NAUSS-24-R02-030, NAUSS-25-R03-023, NAUSS-25-R03-024, NAUSS-25-R03-033
+NAUSS-23-R01-010, NAUSS-23-R01-013, NAUSS-23-R01-021, NAUSS-23-R01-023, NAUSS-23-R01-027, NAUSS-23-R01-039, NAUSS-23-R01-048, NAUSS-23-R01-051, NAUSS-23-R01-057, NAUSS-23-R01-060, NAUSS-23-R01-061, NAUSS-23-R01-062, NAUSS-23-R01-068, NAUSS-23-R01-077, NAUSS-23-R01-082, NAUSS-23-R01-085, NAUSS-23-R01-087, NAUSS-23-R01-091, NAUSS-23-R01-092, NAUSS-24-R02-002, NAUSS-24-R02-009, NAUSS-24-R02-012, NAUSS-24-R02-020, NAUSS-24-R02-023, NAUSS-24-R02-025, NAUSS-24-R02-027, NAUSS-24-R02-030, NAUSS-24-R02-040, NAUSS-24-R02-047, NAUSS-24-R02-055, NAUSS-24-R02-083, NAUSS-24-R02-092, NAUSS-24-R02-093, NAUSS-24-R02-098, NAUSS-25-R03-023, NAUSS-25-R03-024, NAUSS-25-R03-033, NAUSS-25-R03-041, NAUSS-25-R03-063, NAUSS-25-R03-086, NAUSS-25-R03-092
 
 </details>
 
 ## review recommended (running grants)
 
-5 of 13 running grants.
+20 of 48 running grants.
 
 | Grant | Signal at latest report | Action |
 |---|---|---|
+| NAUSS-24-R02-100 | 1 task(s) past plan, starting with final report (3 quarter(s)) | review recommended |
 | NAUSS-25-R03-011 | Data collection not moving since Q2; 5 task(s) past plan, starting with data collection (2 quarter(s)) | review recommended |
 | NAUSS-25-R03-015 | 5 task(s) past plan, starting with data collection (2 quarter(s)) | review recommended |
 | NAUSS-25-R03-021 | 5 task(s) past plan, starting with data collection (2 quarter(s)) | review recommended |
 | NAUSS-25-R03-030 | 2 task(s) past plan, starting with paper submission (1 quarter(s)) | review recommended |
 | NAUSS-25-R03-035 | 4 task(s) past plan, starting with data analysis (2 quarter(s)) | review recommended |
+| NAUSS-25-R03-036 | 3 task(s) past plan, starting with writing results (1 quarter(s)) | review recommended |
+| NAUSS-25-R03-049 | 2 task(s) past plan, starting with paper submission (1 quarter(s)) | review recommended |
+| NAUSS-25-R03-053 | Ethics approval not moving since Q1; 2 task(s) past plan, starting with ethics approval (4 quarter(s)) | review recommended |
+| NAUSS-25-R03-054 | 4 task(s) past plan, starting with data analysis (2 quarter(s)) | review recommended |
+| NAUSS-25-R03-056 | Data collection not moving since Q1 | review recommended |
+| NAUSS-25-R03-060 | Data collection not moving since Q2; 1 task(s) past plan, starting with data collection (1 quarter(s)) | review recommended |
+| NAUSS-25-R03-067 | 5 task(s) past plan, starting with data collection (2 quarter(s)) | review recommended |
+| NAUSS-25-R03-069 | Data collection not moving since Q3; 1 task(s) past plan, starting with data collection (1 quarter(s)) | review recommended |
+| NAUSS-25-R03-074 | Data analysis not moving since Q4 | review recommended |
+| NAUSS-25-R03-078 | Ethics approval not moving since Q1; 1 task(s) past plan, starting with ethics approval (4 quarter(s)) | review recommended |
+| NAUSS-25-R03-080 | Data collection not moving since Q2; 5 task(s) past plan, starting with data collection (2 quarter(s)) | review recommended |
+| NAUSS-25-R03-082 | Data collection not moving since Q1; 1 task(s) past plan, starting with data collection (1 quarter(s)) | review recommended |
+| NAUSS-25-R03-093 | Ethics approval not moving since Q1; 2 task(s) past plan, starting with ethics approval (4 quarter(s)) | review recommended |
+| NAUSS-25-R03-096 | 3 task(s) past plan, starting with writing results (1 quarter(s)) | review recommended |
 
 ## limitations
 
 - All of this is synthetic data. The numbers show that the method runs and how to read it, not anything about real grants.
 - The 0, 5 and 10 point rules give exactly the same result, because the synthetic stalls are all complete freezes. There is no slow progress like 40% → 45% to tell them apart, so the tolerance itself is untested here.
-- 10 of the 16 missed extensions are 12-month grants. With quarterly reports a short grant only has a few reports before its planned end, and most of the missed ones stay close to plan until the last quarter, so there is little to detect early.
+- 23 of the 41 missed extensions are 12-month grants. With quarterly reports a short grant only has a few reports before its planned end, and most of the missed ones stay close to plan until the last quarter, so there is little to detect early.
 - A project that stops *before* the next stage has started (still at 0%) is not a stall by this definition. It shows up in the timetable slip instead, which is why the "stall or slip" rule is there.
 - The false positive rate of 0 is probably optimistic. The synthetic on-time grants follow their plan closely, and real projects are noisier.
 - There are no extension request dates in the data, so lead time is measured to the planned end, not to the request.
 - Completion is only known to the quarter, so slip is in whole quarters.
 - The stage names come from the synthetic forms. The brief lists different ones (pre-data collection, writing first and final version, review stage, publication stage), so the mapping would need updating for the real form.
-- The `stall_stage` column in the synthetic answer key does not match the reports for 11 of its 25 grants (they never stop moving), so the detector is checked against the reports instead, see `tests/test_stall_detector.py`.
+- The `stall_stage` column in the synthetic answer key does not match the reports for 36 of its 84 grants (they never stop moving), so the detector is checked against the reports instead, see `tests/test_stall_detector.py`.

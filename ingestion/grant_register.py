@@ -38,6 +38,7 @@ STATUSES = [REJECTED, NOT_FUNDED, RUNNING, OVERDUE, COMPLETED, COMPLETED_LATE]
 
 PROPOSAL_FIELDS = {
     "Funding round": "round_label",
+    "Title": "title",
     "Project type": "type",
     "College": "college",
     "Department": "department",

@@ -19,7 +19,7 @@ def test_settings_resolve_paths_against_the_repo_root():
     settings = load_settings()
     assert settings.register.is_absolute()
     assert settings.priority_dir("embedding", "hard").name.endswith("hard")
-    assert set(settings.team_outputs) == {"trajectories", "timetables", "drift", "stalls"}
+    assert set(settings.team_outputs) == {"trajectories", "timetables", "drift", "stalls", "slip", "extensions"}
 
 
 def test_contract_reports_the_columns_a_file_lacks():
@@ -55,6 +55,21 @@ def test_a_teammate_file_that_fits_the_contract_is_read(tmp_path):
     output = read_team_output(pending(path))
     assert output.ready
     assert len(output.frame) == 1
+
+
+def test_progress_outputs_point_at_what_stall_report_writes():
+    outputs = load_settings().team_outputs
+    assert outputs["stalls"].file.name == "stall_episodes.csv"
+    assert outputs["slip"].file.name == "timetable_slip.csv"
+    assert outputs["extensions"].file.name == "extension_predictions.csv"
+    assert all(outputs[name].owner == "Member D" for name in ("stalls", "slip", "extensions"))
+
+
+def test_a_missing_file_says_which_command_to_run(tmp_path):
+    output = read_team_output(TeamOutput("stalls", "Member D", tmp_path / "stall_episodes.csv",
+                                         "python -m app.progress.stall_report"))
+    assert not output.ready
+    assert output.command == "python -m app.progress.stall_report"
 
 
 def test_source_index_groups_every_form_of_a_grant():
