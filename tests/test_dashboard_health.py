@@ -1,7 +1,7 @@
 import pandas as pd
 
 from dashboard.data.health import (
-    LATE, ON_TRACK, WATCH, build_tracker, extension_sentence, health_of, needs_attention, overdue_sentence,
+    LATE, NO_HEALTH, ON_TRACK, WATCH, all_projects, build_tracker, extension_sentence, health_of, needs_attention, overdue_sentence,
     stage_result, stall_sentence, warning_record,
 )
 from ingestion.grant_register import COMPLETED, COMPLETED_LATE, NOT_FUNDED, OVERDUE, RUNNING
@@ -39,6 +39,15 @@ def test_tracker_lists_late_grants_first_and_only_funded_ones():
         stalls=[stall("G2")], slips=[overdue("G3")])
     assert list(frame["grant_id"]) == ["G3", "G2", "G1"]
     assert list(frame["health"]) == [LATE, WATCH, ON_TRACK]
+
+
+def test_all_projects_lists_every_proposal_with_running_grants_first():
+    register = pd.DataFrame([grant("G1", COMPLETED_LATE, extended=1), grant("G2", RUNNING), grant("G3", RUNNING),
+                             grant("G4", NOT_FUNDED, funded=0)])
+    frame = tracker(register.to_dict("records"), stalls=[stall("G3")])
+    listed = all_projects(register, frame)
+    assert list(listed["grant_id"]) == ["G3", "G2", "G1", "G4"]
+    assert listed.set_index("grant_id").loc["G4", "health_label"] == NO_HEALTH
 
 
 def test_a_stall_on_a_finished_grant_is_no_longer_open():

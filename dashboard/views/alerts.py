@@ -1,12 +1,13 @@
 import streamlit as st
 
-from dashboard.components.notices import missing_outputs
+from dashboard.components.notices import health_legend, missing_outputs, page_help
 from dashboard.components.proposal_table import open_detail
 from dashboard.data.adapters import load_extensions, load_tracker, progress_outputs
 from dashboard.data.health import HEALTH_LABELS, LATE, WATCH, needs_attention, warning_record
 
 st.title("Alerts")
-st.caption("Running grants someone should check on, and why.")
+page_help("Running projects someone should check on, most urgent first. Each card gives the reason in one sentence. "
+          "Open a project to see the details, then talk to its team.")
 
 if missing_outputs(progress_outputs()):
     st.stop()
@@ -19,6 +20,7 @@ if alerts.empty:
 columns = st.columns(2, gap="small")
 columns[0].metric(HEALTH_LABELS[LATE], int((alerts["health"] == LATE).sum()))
 columns[1].metric(HEALTH_LABELS[WATCH], int((alerts["health"] == WATCH).sum()))
+health_legend()
 
 for row in alerts.itertuples():
     with st.container(border=True):

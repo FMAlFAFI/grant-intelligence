@@ -14,6 +14,19 @@ TABLE_COLUMNS = ["grant_id", "title", "round_label", "college", "status"]
 st.title("Portfolio at a glance")
 st.caption("Where all the research grants stand today.")
 
+with st.expander("How to use this dashboard", expanded=True, icon=":material/help:"):
+    st.markdown("""
+- **Portfolio at a glance**: the big picture, how many proposals there are and where they ended up.
+- **Projects**: the list of all proposals, with their status and health. Filter it, or download it as a CSV file.
+- **Project file**: everything about one project: plan against reality, delays and documents.
+- **Alerts**: the running projects someone should check on, each with the reason in one sentence.
+- **Portfolio map**: what the proposals are about, by priority, college, round or type.
+- **Priority check**: whether each proposal really matches the priority it claims.
+- **Drift**: whether the papers match the proposal. Not available yet.
+
+The **Filters** on the left apply to every page. Select a line in any table to open that project's file.
+""")
+
 filters = st.session_state["filters"]
 frame = filters.apply(load_register()).copy()
 frame["round_name"] = frame["round_label"]
