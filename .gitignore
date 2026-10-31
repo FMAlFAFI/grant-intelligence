@@ -11,6 +11,8 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/
+*.csv
 *.log
 
 # Models & Cache (Rule 1.5 & 1.9)
