@@ -51,10 +51,10 @@ def test_round_comes_from_the_grant_id():
 def test_synthetic_proposals_per_round(tmp_path):
     shutil.copytree(PROPOSALS, tmp_path / "proposals")
     proposals = scan(tmp_path)["proposals"]
-    assert len(proposals) == 100
+    assert len(proposals) == 300
     assert Counter(round_of(grant) for grant in proposals) == {
-        "2023 (round 1)": 30,
-        "2024 (round 2)": 35,
-        "2025 (round 3)": 35,
+        "2023 (round 1)": 100,
+        "2024 (round 2)": 100,
+        "2025 (round 3)": 100,
     }
-    assert Counter(p["language"] for p in proposals.values()) == {"ar": 50, "en": 50}
+    assert Counter(p["language"] for p in proposals.values()) == {"ar": 158, "en": 142}
