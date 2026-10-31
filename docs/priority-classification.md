@@ -24,7 +24,7 @@ proposals exist.
 | Set | Proposals | Arabic / English | What makes it hard |
 |---|---|---|---|
 | Standard (`data/synthetic`) | 100 | 50 / 50 | Nothing: 5 topics per priority, the keyword list was written knowing them |
-| Hard (`data/synthetic_hard`, seed 7) | 100 | 57 / 43 | New topics worded differently, about 40% mix in a second priority |
+| Hard (`data/synthetic/hard`, seed 7) | 100 | 57 / 43 | New topics worded differently, about 40% mix in a second priority |
 
 The keyword list and the priority descriptions were frozen before the hard set was scored. Nothing was tuned on it.
 

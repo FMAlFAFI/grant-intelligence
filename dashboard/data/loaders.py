@@ -58,8 +58,8 @@ def load_priority_by_round():
 def run_command(method, dataset):
     command = f"python -m classification.evaluate_priorities --method {method}"
     if dataset == "hard":
-        command += (" --proposals data/synthetic_hard/raw/proposals"
-                    " --truth data/synthetic_hard/ground_truth/grants.csv")
+        command += (" --proposals data/synthetic/hard/raw/proposals"
+                    " --truth data/synthetic/hard/ground_truth/grants.csv")
     return command
 
 
