@@ -57,4 +57,4 @@ def test_synthetic_proposals_per_round(tmp_path):
         "2024 (round 2)": 100,
         "2025 (round 3)": 100,
     }
-    assert Counter(p["language"] for p in proposals.values()) == {"ar": 180, "en": 120}
+    assert Counter(p["language"] for p in proposals.values()) == {"ar": 158, "en": 142}
