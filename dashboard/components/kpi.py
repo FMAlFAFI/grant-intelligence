@@ -21,12 +21,12 @@ def value_tile(label, text, note, page=None):
             st.page_link(page, label="Open", icon=":material/arrow_forward:")
 
 
-def pending_tile(label, owner, page=None):
-    with st.container(border=True):
-        st.metric(label, "—")
-        st.caption(f"Not finished yet ({owner})")
+def big_number(label, value, note, page=None):
+    with st.container(border=True, height="stretch"):
+        st.metric(label, value)
+        st.caption(note)
         if page:
-            st.page_link(page, label="See what is missing", icon=":material/arrow_forward:")
+            st.page_link(page, label="Open", icon=":material/arrow_forward:")
 
 
 def tile_row(count):

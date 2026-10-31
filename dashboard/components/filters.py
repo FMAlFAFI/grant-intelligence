@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import streamlit as st
 
 GRANT_ID = re.compile(r"NAUSS-(\d{2})-R\d{2}-\d{3}")
-LANGUAGES = {"ar": "Arabic", "en": "English"}
 
 
 def grant_year(grant_id):
@@ -34,12 +33,10 @@ def sidebar_filters(register):
     st.sidebar.header("Filters")
     years = choose("Funding round", sorted(register["year"].unique()), "filter_year",
                    lambda year: f"Round {year - 2022} ({year})")
-    langs = choose("Language", sorted(register["lang"].unique()), "filter_lang", lambda lang: LANGUAGES.get(lang, lang))
     colleges = choose("College", sorted(register["college"].unique()), "filter_college")
-    types = choose("Project type", sorted(register["type"].unique()), "filter_type")
 
     kept = register
-    for column, values in (("year", years), ("lang", langs), ("college", colleges), ("type", types)):
+    for column, values in (("year", years), ("college", colleges)):
         if values:
             kept = kept[kept[column].isin(values)]
     filters = Filters(set(kept["grant_id"]), len(register))

@@ -4,7 +4,8 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.data.contracts import CONTRACTS, missing_columns
-from dashboard.data.loaders import settings
+from dashboard.data.health import build_tracker
+from dashboard.data.loaders import load_register, settings
 from dashboard.settings import ROOT
 
 
@@ -15,6 +16,7 @@ class ModuleOutput:
     ready: bool
     frame: pd.DataFrame
     missing: list = field(default_factory=list)
+    command: str = ""
 
 
 def empty_frame(name):
@@ -32,15 +34,15 @@ def read_team_output(module):
     if not module.file.exists():
         missing = [
             f"File {module.file.name} expected at {relative(module.file)}",
-            f"Produced by {module.produced_by}",
+            f"Run: {module.produced_by}",
             "Columns: " + ", ".join(CONTRACTS[module.name]),
         ]
-        return ModuleOutput(module.name, module.owner, False, empty_frame(module.name), missing)
+        return ModuleOutput(module.name, module.owner, False, empty_frame(module.name), missing, module.produced_by)
     frame = pd.read_csv(module.file, encoding="utf-8-sig")
     gaps = missing_columns(frame, module.name)
     if gaps:
         missing = [f"{module.file.name} exists but lacks columns: " + ", ".join(gaps)]
-        return ModuleOutput(module.name, module.owner, False, empty_frame(module.name), missing)
+        return ModuleOutput(module.name, module.owner, False, empty_frame(module.name), missing, module.produced_by)
     return ModuleOutput(module.name, module.owner, True, frame)
 
 
@@ -56,6 +58,25 @@ def load_drift():
 @st.cache_data
 def load_stalls():
     return load_output("stalls")
+
+
+@st.cache_data
+def load_slip():
+    return load_output("slip")
+
+
+@st.cache_data
+def load_extensions():
+    return load_output("extensions")
+
+
+def progress_outputs():
+    return [load_stalls(), load_slip(), load_extensions()]
+
+
+@st.cache_data
+def load_tracker():
+    return build_tracker(load_register(), load_stalls().frame, load_slip().frame)
 
 
 @st.cache_data

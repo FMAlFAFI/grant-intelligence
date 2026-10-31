@@ -1,6 +1,6 @@
 CONTRACTS = {
     "register": [
-        "grant_id", "round", "year", "lang", "type", "college", "department", "budget", "planned_months",
+        "grant_id", "round", "year", "round_label", "title", "lang", "type", "college", "department", "budget", "planned_months",
         "assessment", "n_reviews", "mean_review_total", "funded", "reports_received", "reports_planned",
         "current_stage", "overall_progress", "budget_spent", "final_report", "extended", "status",
     ],
@@ -15,7 +15,14 @@ CONTRACTS = {
     ],
     "timetables": ["proposal_number", "task", "from_month", "to_month"],
     "drift": ["grant_id", "similarity", "threshold", "drift_flag", "n_papers"],
-    "stalls": ["grant_id", "stall_stage", "stall_quarters", "slip_months", "alert"],
+    "stalls": [
+        "grant_id", "stage", "start_quarter", "alert_quarter", "end_quarter", "reports", "from_pct", "to_pct", "ongoing",
+    ],
+    "slip": [
+        "grant_id", "stage", "planned_to_month", "planned_quarter", "done_quarter", "last_quarter", "slip_quarters",
+        "status",
+    ],
+    "extensions": ["grant_id", "extended", "planned_months", "reports_used", "flag_quarter", "lead_months"],
 }
 
 

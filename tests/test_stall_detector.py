@@ -77,11 +77,11 @@ def test_synthetic_stalls_are_exactly_the_frozen_stages_in_the_answer_key():
 
     found = set(detect(load_trajectories(TRAJECTORIES), tolerance=5)["grant_id"])
     assert found == frozen
-    assert len(found) == 13
+    assert len(found) == 48
 
-    # The stall_stage column only partly agrees: every detected grant has a label, but 11 of the 25
+    # The stall_stage column only partly agrees: every detected grant has a label, but 36 of the 84
     # labelled grants never stop moving in their reports (see docs/stall-detection.md)
     with (TRUTH / "grants.csv").open(encoding="utf-8-sig") as f:
         labelled = {row["grant_id"] for row in csv.DictReader(f) if row["stall_stage"]}
     assert found <= labelled
-    assert len(labelled) == 25
+    assert len(labelled) == 84

@@ -2,23 +2,17 @@ import streamlit as st
 
 from dashboard.components.charts import histogram
 from dashboard.components.kpi import tile, tile_row
-from dashboard.components.notices import pending_panel
 from dashboard.components.proposal_table import proposal_table
 from dashboard.data.adapters import load_drift
 from dashboard.data.loaders import load_register
-
-WILL_SHOW = [
-    "How many funded grants drifted from their proposal, out of how many were checked",
-    "The distribution of proposal to paper similarity with the calibrated threshold",
-    "The list of drifted grants, each one opening its record and Word files",
-]
 
 st.title("Proposal to output drift")
 st.caption("Did we fund what was proposed? Compares the proposal with the papers it produced.")
 
 drift = load_drift()
 if not drift.ready:
-    pending_panel(drift, "Drift", WILL_SHOW)
+    st.info(f"{drift.owner} has not delivered the drift results yet, so there is nothing on main to show.",
+            title="Not available yet", icon=":material/hourglass_top:")
     st.stop()
 
 register = load_register()[["grant_id", "year", "lang", "college", "status"]]
