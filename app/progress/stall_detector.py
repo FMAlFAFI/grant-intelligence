@@ -10,6 +10,7 @@ import logging
 import pandas as pd
 
 from app.progress.progress_trajectories import STAGES
+from config.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,13 @@ def grant_episodes(reports, tolerance, min_reports=1):
     return episodes
 
 
-def detect(trajectories, tolerance, min_reports=1):
+def detect(trajectories, tolerance=None, min_reports=None):
+    cfg = get_config()
+    if tolerance is None:
+        tolerance = cfg.STALL_TOLERANCE
+    if min_reports is None:
+        min_reports = cfg.STALL_MIN_REPORTS
+        
     """Stall episodes for every grant, as a DataFrame (empty but with columns if there are none)."""
     rows = []
     for _, reports in trajectories.groupby("grant_id", sort=True):
