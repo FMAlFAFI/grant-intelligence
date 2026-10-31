@@ -1,0 +1,43 @@
+import streamlit as st
+
+from dashboard.data.contracts import ContractError
+from dashboard.data.loaders import MissingOutput
+
+
+def page_help(text):
+    st.info(text, icon=":material/help:")
+
+
+def health_legend():
+    st.caption("🟢 **On track**: nothing to report. 🟠 **Watch**: a stage stopped moving in the latest report. "
+               "🔴 **Late**: a stage is past its planned end, or the grant needed more time than planned. "
+               "**—**: not funded, so there is nothing to follow. "
+               "A light is a prompt to talk to the team, not a judgement of the researchers.")
+
+
+def show_problem(error):
+    if isinstance(error, MissingOutput):
+        st.warning(f"Missing output: `{error.path.name}`. Run this from the repo root, then reload:\n\n"
+                   f"```\n{error.command}\n```", icon=":material/folder_off:")
+    elif isinstance(error, ContractError):
+        st.error(f"`{error.name}` does not have the expected columns: {', '.join(error.missing)}",
+                 icon=":material/error:")
+    else:
+        raise error
+
+
+def guarded(loader, *args):
+    try:
+        return loader(*args)
+    except (MissingOutput, ContractError) as error:
+        show_problem(error)
+        return None
+
+
+def missing_outputs(outputs):
+    commands = sorted({output.command for output in outputs if not output.ready})
+    if not commands:
+        return False
+    st.warning("Run this from the repo root, then reload the page:\n\n```\n" + "\n".join(commands) + "\n```",
+               title="The progress results are not there yet", icon=":material/folder_off:")
+    return True
