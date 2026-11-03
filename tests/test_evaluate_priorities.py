@@ -1,7 +1,7 @@
 import pandas as pd
 
-from classification.evaluate_priorities import confusion_matrix
-from classification.keyword_classifier import UNKNOWN
+from app.classification.evaluate_priorities import confusion_matrix
+from app.classification.keyword_classifier import UNKNOWN
 
 LABELS = ["National Security", "Cybercrimes and Financial Crimes", "AI and Emerging Technologies"]
 

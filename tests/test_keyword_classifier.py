@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from classification.keyword_classifier import (
+from app.classification.keyword_classifier import (
     UNKNOWN,
     claimed_priority,
     classify,

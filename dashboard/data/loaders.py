@@ -34,29 +34,29 @@ def settings():
 
 @st.cache_data
 def load_register():
-    return read_csv(settings().register, "python -m ingestion.grant_register", "register")
+    return read_csv(settings().register, "python -m app.ingestion.grant_register", "register")
 
 
 @st.cache_data
 def load_progress_history():
-    return read_csv(settings().progress_history, "python -m ingestion.grant_register", "progress_history")
+    return read_csv(settings().progress_history, "python -m app.ingestion.grant_register", "progress_history")
 
 
 @st.cache_data
 def load_proposals():
     folder = settings().portfolio_dir
-    return read_csv(folder / "proposals.csv", "python -m classification.portfolio_map", "proposals")
+    return read_csv(folder / "proposals.csv", "python -m app.classification.portfolio_map", "proposals")
 
 
 @st.cache_data
 def load_priority_by_round():
     folder = settings().portfolio_dir
-    table = read_csv(folder / "priority_by_round.csv", "python -m classification.portfolio_map", index_col=0)
+    table = read_csv(folder / "priority_by_round.csv", "python -m app.classification.portfolio_map", index_col=0)
     return table.drop(index="Total", errors="ignore").drop(columns="Total", errors="ignore")
 
 
 def run_command(method, dataset):
-    command = f"python -m classification.evaluate_priorities --method {method}"
+    command = f"python -m app.classification.evaluate_priorities --method {method}"
     if dataset == "hard":
         command += (" --proposals data/synthetic/hard/raw/proposals"
                     " --truth data/synthetic/hard/ground_truth/grants.csv")

@@ -15,7 +15,7 @@ from statistics import median
 from app.progress import bottleneck, extension_predictor, stall_detector, timetable_slip
 from app.statistics.confidence_intervals import rate
 from config.config import ROOT, get_config
-from ingestion.data_inventory import table
+from app.ingestion.data_inventory import table
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=cfg.LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logging.getLogger("ingestion.text_extractor").setLevel(logging.WARNING)
+    logging.getLogger("app.ingestion.text_extractor").setLevel(logging.WARNING)
     for path, how in [(args.trajectories, "python -m app.progress.progress_trajectories"),
                       (args.timetables, "python inspect_proposals.py"),
                       (args.final_reports, "python -m app.ingestion.pseudonymiser")]:

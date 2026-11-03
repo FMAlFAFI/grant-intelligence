@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.components.status_badge import status_scale
-from ingestion.grant_register import STATUSES
+from app.ingestion.grant_register import STATUSES
 
 SERIES = "#2a78d6"
 MUTED = "#a3a29c"

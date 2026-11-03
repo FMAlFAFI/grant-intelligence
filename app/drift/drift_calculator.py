@@ -8,8 +8,8 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.models import LockedEncoder, load_prompt_file
-from app.schemas import check
+from app.models.embedding_client import LockedEncoder, load_prompt_file
+from app.schemas.contracts import check
 
 
 def calculate_drift():
@@ -17,7 +17,6 @@ def calculate_drift():
     Compute semantic drift between proposal abstracts and publication titles
     using the locked Qwen3 embedding model, versioned prompt spec, and schema check.
     """
-    # Load versioned prompt specification from disk at call time (Rule 1.4)
     prompt_spec = load_prompt_file("classify_v1.md")
 
     input_file = ROOT / "data" / "synthetic_drift_calibration_50.csv"
@@ -60,7 +59,6 @@ def calculate_drift():
     grouped["threshold"] = threshold
     grouped["drift_flag"] = (grouped["similarity"] < threshold).astype(int)
 
-    # Validate output DataFrame against the formal schema contract in app.schemas
     final_df = check(grouped[["grant_id", "similarity", "threshold", "drift_flag", "n_papers"]], "drift")
     final_df.to_csv(output_file, index=False, encoding="utf-8-sig")
     print(f"Success! Drift scores saved for {len(final_df)} grants to: {output_file}")
