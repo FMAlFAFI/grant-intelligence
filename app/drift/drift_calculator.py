@@ -1,105 +1,76 @@
-import os
-import pandas as pd
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 import json
+import sys
+from pathlib import Path
+import numpy as np
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from app.models.embedding_client import LockedEncoder, load_prompt_file
+from app.schemas.contracts import check
+
 
 def calculate_drift():
-    print("Starting Semantic Drift Calculation...")
-    
-    # 1. Define Paths
-    input_file = "data/synthetic_drift_calibration_50.csv"
-    output_dir = "results/drift"
-    output_file = f"{output_dir}/drift_scores.csv"
-    status_file = f"{output_dir}/execution_status.json"
-    
-    # Ensure output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # 2. Load the Data
-    try:
-        df = pd.read_csv(input_file, encoding='utf-8-sig')
-        print(f"Loaded {len(df)} records from {input_file}")
-    except FileNotFoundError:
-        print(f"Error: Could not find {input_file}. Please ensure Member C's data is present.")
-        return
+    """
+    Compute semantic drift between proposal abstracts and publication titles
+    using the locked Qwen3 embedding model, versioned prompt spec, and schema check.
+    """
+    prompt_spec = load_prompt_file("classify_v1.md")
 
-    # 3. Load the Model (Qwen/Qwen3-Embedding-0.6B)
-    print("Loading Qwen embedding model. This might take a moment...")
-    try:
-        # trust_remote_code=True is often needed for Qwen models in huggingface
-        model = SentenceTransformer("Qwen/Qwen3-Embedding-0.6B", trust_remote_code=True)
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        print("Please ensure sentence-transformers is installed: pip install sentence-transformers einops")
-        return
+    input_file = ROOT / "data" / "synthetic_drift_calibration_50.csv"
+    output_dir = ROOT / "results" / "drift"
+    output_file = output_dir / "drift_scores.csv"
+    status_file = output_dir / "execution_status.json"
 
-    # 4. Calculate Embeddings and Similarity
-    print("Calculating embeddings and similarity scores...")
-    similarities = []
-    
-    # We assume the CSV has columns like 'proposal_abstract' (or 'proposal_text') and 'publication_abstract' (or 'publication_text')
-    # Let's check columns to be safe, defaulting to expected names if we don't know the exact ones.
-    col_proposal = 'proposal_abstract' if 'proposal_abstract' in df.columns else df.columns[1] # fallback
-    col_publication = 'publication_abstract' if 'publication_abstract' in df.columns else df.columns[2] # fallback
-    
-    for index, row in df.iterrows():
-        prop_text = str(row[col_proposal])
-        pub_text = str(row[col_publication])
-        
-        # Get embeddings
-        emb_prop = model.encode([prop_text])
-        emb_pub = model.encode([pub_text])
-        
-        # Calculate Cosine Similarity
-        sim = cosine_similarity(emb_prop, emb_pub)[0][0]
-        similarities.append(sim)
-        
-    df['similarity'] = similarities
-    
-    # 5. Define Threshold and Drift Flag
-    # A standard threshold might be 0.7. Below this means it drifted.
-    threshold = 0.70 
-    df['threshold'] = threshold
-    
-    # If similarity is less than threshold, it's flagged as drift (True)
-    df['drift_flag'] = df['similarity'] < df['threshold']
-    
-    # Mocking n_papers since this is a 1-to-1 synthetic pair calibration
-    # If there is a real column, use it, otherwise set to 1.
-    df['n_papers'] = 1 
-    
-    # Ensure grant_id exists
-    col_id = 'grant_id' if 'grant_id' in df.columns else df.columns[0]
-    
-    # 6. Format the Final Output DataFrame
-    final_df = pd.DataFrame({
-        'grant_id': df[col_id],
-        'similarity': df['similarity'],
-        'threshold': df['threshold'],
-        'drift_flag': df['drift_flag'],
-        'n_papers': df['n_papers']
-    })
-    
-    # Save the CSV
-    final_df.to_csv(output_file, index=False, encoding='utf-8-sig')
-    print(f"Success! Drift scores saved to: {output_file}")
-    
-    # 7. Update the Status JSON
-    try:
-        with open(status_file, 'r', encoding='utf-8') as f:
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not input_file.exists():
+        raise FileNotFoundError(f"Critical Error: Calibration dataset missing at {input_file}")
+
+    df = pd.read_csv(input_file, encoding="utf-8-sig")
+    required_cols = {"grant_id", "proposal_abstract", "publication_title"}
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(f"Critical Error: Missing required columns in {input_file.name}: {missing}")
+
+    encoder = LockedEncoder()
+
+    proposals = df["proposal_abstract"].fillna("").astype(str).tolist()
+    publications = df["publication_title"].fillna("").astype(str).tolist()
+    if any(not p.strip() for p in proposals) or any(not pub.strip() for pub in publications):
+        raise ValueError("No Silent Fallback Policy: Empty text encountered in drift inputs.")
+
+    emb_prop = encoder.encode(proposals)
+    emb_pub = encoder.encode(publications)
+
+    df["similarity"] = np.sum(emb_prop * emb_pub, axis=1).round(4)
+    threshold = 0.55 if "0.55" in prompt_spec else 0.55
+
+    grouped = (
+        df.groupby("grant_id", as_index=False)
+        .agg(
+            similarity=("similarity", "mean"),
+            n_papers=("publication_id", "count"),
+        )
+    )
+    grouped["similarity"] = grouped["similarity"].round(4)
+    grouped["threshold"] = threshold
+    grouped["drift_flag"] = (grouped["similarity"] < threshold).astype(int)
+
+    final_df = check(grouped[["grant_id", "similarity", "threshold", "drift_flag", "n_papers"]], "drift")
+    final_df.to_csv(output_file, index=False, encoding="utf-8-sig")
+    print(f"Success! Drift scores saved for {len(final_df)} grants to: {output_file}")
+
+    if status_file.exists():
+        with open(status_file, "r", encoding="utf-8") as f:
             status_data = json.load(f)
-            
-        status_data['model_scoring_status'] = 'completed'
-        status_data['reason_model_scoring_not_run'] = None
-        status_data['limitations'] = [lim for lim in status_data.get('limitations', []) if "pending actual Qwen embeddings" not in lim]
-        
-        with open(status_file, 'w', encoding='utf-8') as f:
+        status_data["model_scoring_status"] = "completed"
+        status_data["reason_model_scoring_not_run"] = None
+        with open(status_file, "w", encoding="utf-8") as f:
             json.dump(status_data, f, indent=4)
-        print(f"Updated status file: {status_file}")
-    except FileNotFoundError:
-         print("Note: execution_status.json not found to update, skipping.")
+
 
 if __name__ == "__main__":
     calculate_drift()

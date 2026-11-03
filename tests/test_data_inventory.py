@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ingestion.data_inventory import detect_language, empty_fields, english, fields, parse_form, round_of, scan
+from app.ingestion.data_inventory import detect_language, empty_fields, english, fields, parse_form, round_of, scan
 
 PROPOSALS = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "raw" / "proposals"
 

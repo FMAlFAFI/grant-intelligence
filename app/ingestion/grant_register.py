@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from classification.portfolio_map import canonical, load_name_map
-from ingestion.extension_check import extension_status
-from ingestion.text_extractor import extract_lines
+from app.classification.portfolio_map import canonical, load_name_map
+from app.ingestion.extension_check import extension_status
+from app.ingestion.text_extractor import extract_lines
 
 logger = logging.getLogger(__name__)
 

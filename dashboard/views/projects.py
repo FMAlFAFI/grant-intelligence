@@ -4,7 +4,7 @@ from dashboard.components.notices import health_legend, missing_outputs, page_he
 from dashboard.components.proposal_table import COLUMN_LABELS, proposal_table
 from dashboard.data.adapters import load_all_projects, progress_outputs
 from dashboard.data.health import HEALTHS
-from ingestion.grant_register import STATUSES
+from app.ingestion.grant_register import STATUSES
 
 TABLE_COLUMNS = ["grant_id", "title", "round_label", "college", "status", "health_label", "current_stage_name",
                  "overall_progress", "months"]

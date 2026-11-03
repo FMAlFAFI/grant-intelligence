@@ -5,11 +5,11 @@ from pathlib import Path
 
 import yaml
 
-from ingestion.text_extractor import extract_lines
+from app.ingestion.text_extractor import extract_lines
 
 logger = logging.getLogger(__name__)
 
-CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "priorities.yaml"
+CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "priorities.yaml"
 FIELD_WEIGHTS = {"title": 3.0, "keywords": 2.0, "abstract": 1.0, "background": 1.0}
 UNKNOWN = "Unclassified"
 

@@ -16,8 +16,8 @@ from datetime import date
 from pathlib import Path
 
 from config.config import ROOT, get_config
-from ingestion.data_inventory import GRANT_ID, english, fields, parse_form, round_of, table
-from ingestion.text_extractor import extract_text
+from app.ingestion.data_inventory import GRANT_ID, english, fields, parse_form, round_of, table
+from app.ingestion.text_extractor import extract_text
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +153,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=cfg.LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    logging.getLogger("ingestion.text_extractor").setLevel(logging.WARNING)
+    logging.getLogger("app.ingestion.text_extractor").setLevel(logging.WARNING)
     if not args.reviews_dir.exists():
         logger.error("%s does not exist. Run `python -m app.ingestion.pseudonymiser` first.", args.reviews_dir)
         return 1

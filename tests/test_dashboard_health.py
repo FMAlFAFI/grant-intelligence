@@ -4,7 +4,7 @@ from dashboard.data.health import (
     LATE, NO_HEALTH, ON_TRACK, WATCH, all_projects, build_tracker, extension_sentence, health_of, needs_attention, overdue_sentence,
     stage_result, stall_sentence, warning_record,
 )
-from ingestion.grant_register import COMPLETED, COMPLETED_LATE, NOT_FUNDED, OVERDUE, RUNNING
+from app.ingestion.grant_register import COMPLETED, COMPLETED_LATE, NOT_FUNDED, OVERDUE, RUNNING
 
 
 def grant(grant_id, status, extended=0, funded=1):

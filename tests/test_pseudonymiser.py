@@ -9,7 +9,7 @@ from docx.oxml.ns import nsdecls
 
 from app.ingestion.pseudonymiser import (Mapping, check_outside_repo, find_names, leftovers, name_key,
                                          paragraph_text, replace_in_paragraph, run)
-from ingestion.text_extractor import extract_text
+from app.ingestion.text_extractor import extract_text
 
 RAW = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "raw"
 GRANT = "NAUSS-23-R01-006"  # Arabic proposal, two reviews, progress reports and a final report
