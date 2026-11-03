@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from classification import embedding_classifier, keyword_classifier
-from classification.keyword_classifier import UNKNOWN, load_priorities
+from app.classification import embedding_classifier, keyword_classifier
+from app.classification.keyword_classifier import UNKNOWN, load_priorities
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import altair as alt
 import streamlit as st
 
-from ingestion.grant_register import COMPLETED, COMPLETED_LATE, NOT_FUNDED, OVERDUE, REJECTED, RUNNING, STATUSES
+from app.ingestion.grant_register import COMPLETED, COMPLETED_LATE, NOT_FUNDED, OVERDUE, REJECTED, RUNNING, STATUSES
 
 CHART_COLORS = {
     REJECTED: "#a3a29c",

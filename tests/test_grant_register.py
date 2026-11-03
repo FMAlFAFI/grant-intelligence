@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from ingestion.grant_register import (
+from app.ingestion.grant_register import (
     COMPLETED, COMPLETED_LATE, NOT_FUNDED, OVERDUE, REJECTED, RUNNING, STAGE_COLUMNS,
     build_progress_history, build_register, current_stage, lifecycle_status,
 )

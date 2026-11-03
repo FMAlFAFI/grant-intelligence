@@ -6,11 +6,11 @@ from pathlib import Path
 
 import numpy as np
 
-from classification.keyword_classifier import UNKNOWN, claimed_priority, load_priorities, proposal_fields
+from app.classification.keyword_classifier import UNKNOWN, claimed_priority, load_priorities, proposal_fields
 
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 LOCK_PATH = ROOT / "models.lock"
 LOCK_KEY = "embedding_model"
 CACHE_DIR = ROOT / "cache" / "embeddings"
@@ -29,7 +29,7 @@ def read_lock(lock_key=LOCK_KEY, lock_path=LOCK_PATH):
     entry = (json.loads(text) if text else {}).get(lock_key)
     if not isinstance(entry, dict) or not entry.get("model_id") or not entry.get("commit_hash"):
         raise ModelNotLocked(
-            f"No model_id and commit_hash under '{lock_key}' in {path}. Run: python embeddings/setup_model.py"
+            f"No model_id and commit_hash under '{lock_key}' in {path}. Run: python -m app.models.setup_model"
         )
     return entry["model_id"], entry["commit_hash"]
 

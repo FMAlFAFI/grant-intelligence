@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from classification.portfolio_map import NOT_GIVEN, build_portfolio, canonical, count_table, load_name_map
+from app.classification.portfolio_map import NOT_GIVEN, build_portfolio, canonical, count_table, load_name_map
 
 NAMES = load_name_map()
 PROPOSALS = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "raw" / "proposals"

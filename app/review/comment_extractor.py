@@ -1,4 +1,4 @@
-# Path: evaluation/extract_concerns.py
+# Path: app/review/comment_extractor.py
 import re
 import logging
 from collections import Counter

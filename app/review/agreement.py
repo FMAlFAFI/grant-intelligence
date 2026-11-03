@@ -1,4 +1,4 @@
-# Path: evaluation/reviewer_agreement.py
+# Path: app/review/agreement.py
 import numpy as np
 import logging
 

@@ -1,4 +1,4 @@
-# Path: experiments/exp3_cross_lingual.py
+# Path: app/drift/cross_lingual.py
 import json
 from pathlib import Path
 import numpy as np

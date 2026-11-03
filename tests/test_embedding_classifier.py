@@ -4,7 +4,7 @@ import zlib
 import numpy as np
 import pytest
 
-from classification.embedding_classifier import (
+from app.classification.embedding_classifier import (
     EmbeddingCache,
     ModelNotLocked,
     classify_section,
@@ -14,7 +14,7 @@ from classification.embedding_classifier import (
     prototypes_from_examples,
     read_lock,
 )
-from classification.keyword_classifier import UNKNOWN, load_priorities
+from app.classification.keyword_classifier import UNKNOWN, load_priorities
 
 PRIORITIES = load_priorities()
 

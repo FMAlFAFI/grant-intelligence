@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from ingestion.grant_register import STAGES
+from app.ingestion.grant_register import STAGES
 
 
 def present(value):

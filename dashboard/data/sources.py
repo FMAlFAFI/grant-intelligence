@@ -5,7 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 from dashboard.data.loaders import settings
-from ingestion.text_extractor import extract_lines
+from app.ingestion.text_extractor import extract_lines
 
 GRANT_ID = re.compile(r"NAUSS-\d{2}-R\d{2}-\d{3}")
 FORM_KINDS = {
