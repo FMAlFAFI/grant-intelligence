@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "dashboard" / "streamlit_app.py"
 REGISTER = ROOT / "results" / "register" / "grants_register.csv"
 TRUTH = ROOT / "data" / "synthetic" / "ground_truth" / "grants.csv"
-PAGES = ["glance", "projects", "project_file", "alerts", "portfolio", "priority_check", "drift"]
+PAGES = ["glance", "projects", "project_file", "alerts", "portfolio", "priority_check", "drift", "submission"]
 
 
 @pytest.mark.skipif(not REGISTER.exists(), reason="grant register not generated")

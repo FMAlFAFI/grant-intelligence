@@ -51,9 +51,9 @@ if __name__ == "__main__":
     
     # Data for testing the confirmation rate calculation
     sample_self_reported = [
-        {"title": "SoK: On the Semantic AI Security in Autonomous Driving", "author": "Smith"}, # بحث حقيقي
-        {"title": "An Ontology-Driven AI Framework for Context-Aware Threat Detection in Mobile Health Applications", "author": "Ali"}, # بحث حقيقي
-        {"title": "Fake Paper on 6G Networks that was never published", "author": "John Doe"} # بحث غير حقيقي
+        {"title": "SoK: On the Semantic AI Security in Autonomous Driving", "author": "Smith"}, # Valid real DOI
+        {"title": "An Ontology-Driven AI Framework for Context-Aware Threat Detection in Mobile Health Applications", "author": "Ali"}, # Valid real DOI
+        {"title": "Fake Paper on 6G Networks that was never published", "author": "John Doe"} # Synthetic fake DOI
     ]
     
     calculate_confirmation_rate(sample_self_reported)
