@@ -22,7 +22,8 @@ with st.expander("How to use this dashboard", expanded=True, icon=":material/hel
 - **Alerts**: the running projects someone should check on, each with the reason in one sentence.
 - **Portfolio map**: what the proposals are about, by priority, college, round or type.
 - **Priority check**: whether each proposal really matches the priority it claims.
-- **Drift**: whether the papers match the proposal. Not available yet.
+- **Drift**: whether the published papers match the original proposal abstract.
+- **Submissions & Validation**: institutional proposal capture form and 14-criteria statistical validity analysis.
 
 The **Filters** on the left apply to every page. Select a line in any table to open that project's file.
 """)
