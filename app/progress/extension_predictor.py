@@ -12,8 +12,8 @@ import pandas as pd
 
 from app.progress.stall_detector import detect, first_alert
 from app.progress.timetable_slip import first_behind
-from ingestion.data_inventory import GRANT_ID, english, fields, parse_form
-from ingestion.text_extractor import extract_text
+from app.ingestion.data_inventory import GRANT_ID, english, fields, parse_form
+from app.ingestion.text_extractor import extract_text
 
 logger = logging.getLogger(__name__)
 

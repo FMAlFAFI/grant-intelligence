@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from docx import Document
 
-from ingestion.text_extractor import extract_lines, extract_text
+from app.ingestion.text_extractor import extract_lines, extract_text
 
 PROPOSALS = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "raw" / "proposals"
 AR_FILE = PROPOSALS / "NAUSS-23-R01-025_proposal_ar.docx"

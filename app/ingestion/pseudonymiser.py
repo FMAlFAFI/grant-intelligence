@@ -18,8 +18,8 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.oxml.ns import qn
 
 from config.config import ROOT, get_config
-from ingestion.data_inventory import DOC_TYPES, english
-from ingestion.text_extractor import PLACEHOLDERS
+from app.ingestion.data_inventory import DOC_TYPES, english
+from app.ingestion.text_extractor import PLACEHOLDERS
 
 logger = logging.getLogger(__name__)
 

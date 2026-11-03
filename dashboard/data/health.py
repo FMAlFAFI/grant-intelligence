@@ -1,7 +1,7 @@
 import pandas as pd
 
 from app.progress.stall_detector import STAGE_COLUMNS
-from ingestion.grant_register import COMPLETED, COMPLETED_LATE, OVERDUE, RUNNING
+from app.ingestion.grant_register import COMPLETED, COMPLETED_LATE, OVERDUE, RUNNING
 
 LATE = "Late"
 WATCH = "Watch"

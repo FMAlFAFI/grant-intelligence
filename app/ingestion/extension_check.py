@@ -3,7 +3,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from ingestion.text_extractor import extract_lines
+from app.ingestion.text_extractor import extract_lines
 
 logger = logging.getLogger(__name__)
 

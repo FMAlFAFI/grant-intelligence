@@ -1,5 +1,5 @@
 import logging
-from ingestion.openalex_connector import search_published_papers
+from app.linkage.openalex_connector import search_published_papers
 
 logger = logging.getLogger(__name__)
 
