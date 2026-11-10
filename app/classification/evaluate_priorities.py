@@ -6,6 +6,8 @@ import pandas as pd
 
 from app.classification import embedding_classifier, keyword_classifier
 from app.classification.keyword_classifier import UNKNOWN, load_priorities
+from app.logging_setup import configure_logging
+from config.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -91,16 +93,17 @@ def run_method(args, priorities):
 
 
 def main(argv=None):
+    cfg = get_config()
     parser = argparse.ArgumentParser(description="Keyword baseline for research priorities.")
-    parser.add_argument("--proposals", default="data/synthetic/raw/proposals")
-    parser.add_argument("--truth", default="data/synthetic/ground_truth/grants.csv")
+    parser.add_argument("--proposals", default=str(cfg.PSEUDONYMISED_DIR / "proposals"))
+    parser.add_argument("--truth", default=str(cfg.GROUND_TRUTH_DIR / "grants.csv"))
     parser.add_argument("--out", default=None)
     parser.add_argument("--method", choices=["keyword", "embedding", "embedding-fewshot"], default="keyword")
-    parser.add_argument("--train-proposals", default="data/synthetic/raw/proposals")
-    parser.add_argument("--train-truth", default="data/synthetic/ground_truth/grants.csv")
+    parser.add_argument("--train-proposals", default=str(cfg.PSEUDONYMISED_DIR / "proposals"))
+    parser.add_argument("--train-truth", default=str(cfg.GROUND_TRUTH_DIR / "grants.csv"))
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    args.out = args.out or f"results/priority_{args.method.replace('-', '_')}"
+    configure_logging()
+    args.out = args.out or str(cfg.RESULTS_DIR / f"priority_{args.method.replace('-', '_')}")
 
     priorities = load_priorities()
     labels = [p.name_en for p in priorities]

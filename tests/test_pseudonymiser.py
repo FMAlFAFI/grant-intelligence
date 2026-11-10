@@ -105,6 +105,23 @@ def test_synthetic_grant_has_no_names_left(one_grant, tmp_path):
 
 
 @needs_data
+def test_copies_without_a_source_form_are_removed(one_grant, tmp_path):
+    out, mapping = tmp_path / "out", tmp_path / "private" / "map.csv"
+    stale = out / "proposals" / "NAUSS-00-R00-000_proposal_en.docx"
+    stale.parent.mkdir(parents=True)
+    stale.write_bytes(b"left over from an older corpus")
+    summary = run(one_grant, out, mapping)
+    assert summary["pruned"] == 1
+    assert not stale.exists()
+    assert len(list(out.rglob("*.docx"))) == summary["files"]
+
+
+def test_an_empty_raw_folder_is_an_error(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        run(tmp_path / "raw", tmp_path / "out", tmp_path / "private" / "map.csv")
+
+
+@needs_data
 def test_running_twice_gives_the_same_output(one_grant, tmp_path):
     mapping = tmp_path / "private" / "map.csv"
     run(one_grant, tmp_path / "first", mapping)
