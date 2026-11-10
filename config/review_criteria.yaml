@@ -1,61 +1,104 @@
-
+version: 2
 review_criteria:
   - id: C01
+    code: A1
+    area: topic
     name: "Title reflects importance and follows correct scientific style"
     weight: 5
 
   - id: C02
+    code: A2
+    area: topic
     name: "Originality and novelty"
     weight: 15
 
   - id: C03
+    code: A3
+    area: topic
     name: "Objectives are clear, measurable, and achievable"
     weight: 10
 
   - id: C04
+    code: A4
+    area: topic
     name: "Objectives are linked to the research topic"
     weight: 5
 
   - id: C05
+    code: A5
+    area: topic
     name: "Justification is clear, background is thorough, and sources are recent"
     weight: 15
 
   - id: C06
+    code: B1
+    area: method
     name: "Methodology is appropriate"
     weight: 3
 
   - id: C07
+    code: B2
+    area: method
     name: "Plan specifies procedures and time frame"
     weight: 5
 
   - id: C08
+    code: B3C
+    area: method
     name: "Population and sampling are clear"
     weight: 3
 
   - id: C09
+    code: B3D
+    area: method
     name: "Data collection methods are correct"
     weight: 3
 
   - id: C10
+    code: B3E
+    area: method
     name: "Statistical analysis is clear and correct"
     weight: 3
 
   - id: C11
+    code: B3F
+    area: method
     name: "Ethical considerations are clear"
     weight: 3
 
   - id: C12
+    code: C1
+    area: output
     name: "Targeted papers are clear and consistent with objectives"
     weight: 10
 
   - id: C13
+    code: D1
+    area: team
     name: "Team expertise is related to the research topic"
     weight: 5
 
   - id: C14
+    code: E1
+    area: budget
     name: "Budget is suitable and connected to the proposal"
     weight: 10
 
   - id: C15
+    code: D2
+    area: team
     name: "Team size and roles are suitable"
     weight: 5
+
+# The form lets a reviewer give criteria C to F (B3C to B3F) as one mark out of 12 instead of four
+# marks out of 3. Wherever all reviews are compared, C to F is used as this single score.
+combined_methodology:
+  code: B3
+  name: "Population, data collection, statistical analysis and ethics (C to F) as one mark"
+  parts: [B3C, B3D, B3E, B3F]
+
+# Initial assessment questions that overlap the rubric (brief section 6.3)
+gate_overlap:
+  gate_team: [D1]
+  gate_budget: [E1]
+  gate_methodology: [B1, B2, B3]

@@ -1,0 +1,33 @@
+﻿method,language,concern,comments,support,flagged,precision,recall,f1
+keywords (baseline),ar,sample_size,131,31,31,1.0,1.0,1.0
+keywords (baseline),ar,timetable,131,30,30,1.0,1.0,1.0
+keywords (baseline),ar,equipment_budget,131,27,27,1.0,1.0,1.0
+keywords (baseline),ar,recent_sources,131,33,33,1.0,1.0,1.0
+keywords (baseline),ar,ethics,131,33,33,1.0,1.0,1.0
+keywords (baseline),ar,publications_link,131,22,22,1.0,1.0,1.0
+keywords (baseline),ar,statistics_expertise,131,25,25,1.0,1.0,1.0
+keywords (baseline),ar,macro average,131,201,201,,,1.0
+keywords (baseline),en,sample_size,99,22,22,1.0,1.0,1.0
+keywords (baseline),en,timetable,99,19,19,1.0,1.0,1.0
+keywords (baseline),en,equipment_budget,99,17,17,1.0,1.0,1.0
+keywords (baseline),en,recent_sources,99,20,20,1.0,1.0,1.0
+keywords (baseline),en,ethics,99,19,19,1.0,1.0,1.0
+keywords (baseline),en,publications_link,99,24,24,1.0,1.0,1.0
+keywords (baseline),en,statistics_expertise,99,29,29,1.0,1.0,1.0
+keywords (baseline),en,macro average,99,150,150,,,1.0
+embedding,ar,sample_size,131,31,31,1.0,1.0,1.0
+embedding,ar,timetable,131,30,30,1.0,1.0,1.0
+embedding,ar,equipment_budget,131,27,27,1.0,1.0,1.0
+embedding,ar,recent_sources,131,33,0,,0.0,0.0
+embedding,ar,ethics,131,33,33,1.0,1.0,1.0
+embedding,ar,publications_link,131,22,22,1.0,1.0,1.0
+embedding,ar,statistics_expertise,131,25,25,1.0,1.0,1.0
+embedding,ar,macro average,131,201,168,,,0.8571428571428571
+embedding,en,sample_size,99,22,22,1.0,1.0,1.0
+embedding,en,timetable,99,19,19,1.0,1.0,1.0
+embedding,en,equipment_budget,99,17,17,1.0,1.0,1.0
+embedding,en,recent_sources,99,20,0,,0.0,0.0
+embedding,en,ethics,99,19,19,1.0,1.0,1.0
+embedding,en,publications_link,99,24,24,1.0,1.0,1.0
+embedding,en,statistics_expertise,99,29,29,1.0,1.0,1.0
+embedding,en,macro average,99,150,130,,,0.8571428571428571
