@@ -25,13 +25,14 @@ All of these live in `config/config.py` and do not change during the project.
 
 The brief says the number of completed grants decides whether Stages 6.4 and 7 can be inferential.
 
-- Synthetic data: **48 completed grants** out of 61 funded (24 extended, 24 not).
+- Synthetic data: **140 completed grants** out of 180 funded (57 extended, 83 not). The first version of
+  this file said 48 of 61; that was the first synthetic corpus, which was regenerated (see the change log).
 - Our rule: with fewer than 30 completed grants, 6.4 and 7 are reported as descriptive only (estimates
-  and intervals, no p-values). 48 is above that, so we test, but the power is low.
-- With n = 48, a two-sided test at 0.05 with 80% power can only detect a correlation of about
-  **0.39**. After the multiple-comparison correction below (30 tests), it is closer to **0.53**.
-  Only strong relationships would show up, and a null result here mostly means "not detectable with
-  48 grants", not "no relationship". We'll say that next to any null result.
+  and intervals, no p-values). 140 is above that, so we test.
+- With n = 140, a two-sided test at 0.05 with 80% power can detect a correlation of about **0.23**.
+  After the multiple-comparison correction below (30 tests, worst case), it is about **0.33**.
+  Weak relationships would not show up, and a null result here mostly means "not detectable with
+  140 grants", not "no relationship". We say that next to any null result.
 
 ## confidence intervals
 
@@ -76,8 +77,8 @@ Some reviews give criteria C to F (population and sampling, data collection, sta
 ethics) as four marks out of 3, and others as one mark out of 12. `app/ingestion/review_variants.py`
 records which form each review used; the result is in `docs/review-variants.md`.
 
-- Synthetic data: 129 standard and 29 combined reviews. Of the 73 proposals with two reviews,
-  **19 have one review of each kind**.
+- Synthetic data: 364 standard and 95 combined reviews. Of the 202 proposals with two reviews,
+  **59 have one review of each kind** (`docs/review-variants.md` is regenerated on every pipeline run).
 - Wherever all reviews are compared, C–F is used as **one score out of 12**: the combined mark, or the
   sum of the four marks on a standard review. That gives 12 criteria that every review has:
   A1–A5, B1, B2, B3 (C–F), C1, D1, E1, D2.
@@ -177,29 +178,39 @@ Thresholds fixed now, before running it on any data:
 
 ## drift thresholds (Stage 4, Experiment 4)
 
-These belong to the drift work (issue #7), so the values get filled in there, but the procedure is fixed
-now:
+The procedure was fixed before any similarity was computed:
 
 1. 50 grant–publication sets are labelled aligned / partially aligned / divergent before anyone looks at
-   similarity scores. On synthetic data the `output_drift` column of `papers.csv` stands in for the
-   researcher's labels, and we'll say that.
+   similarity scores. On synthetic data the labels are analyst-written scenario labels in
+   `evaluation/drift/synthetic_drift_calibration_50.csv` (see the change log: the first version of this
+   file named the `output_drift` column of `papers.csv` instead).
 2. Split them 25 / 25 with seed 42. On the first half, choose the two cut-offs (aligned/partial and
    partial/divergent) that give the highest Cohen's kappa with the labels.
 3. Report kappa on the other half only, with a bootstrap CI. The cut-offs are then frozen for the whole
    portfolio.
 4. If we get a second labeller, report the agreement between the two labellers as the ceiling.
 
-| Threshold | Value | Calibrated on |
-|---|---|---|
-| aligned / partially aligned | not set yet | (issue #7) |
-| partially aligned / divergent | not set yet | (issue #7) |
+The values are written by `python -m app.drift.threshold_calibration` to
+`evaluation/results/drift_thresholds.json` and are never typed by hand. Current values:
+
+| Comparison | Close (aligned) at or above | Distant (divergent) below | Kappa on the held-out half (95% CI) |
+|---|---|---|---|
+| proposal abstract against publication title | 0.7922 | 0.5148 | 0.20 (-0.02 to 0.42), 25 sets |
+| expected publications against publication title | 0.5756 | 0.4976 | 0.41 (0.09 to 0.70), 22 sets |
+
+Agreement is weak. `docs/drift-calibration.md` shows why: at the same label, an Arabic proposal compared
+with an English publication scores about 0.10 lower than a same-language pair. Results are therefore
+reported by language pairing. Cut-offs per pairing are not calibrated, because no labelled set with an
+Arabic proposal is divergent.
 
 ## software
 
 NumPy and SciPy (`scipy.stats`: `spearmanr`, `permutation_test`, `bootstrap`, `fisher_exact`). Holm and
 Benjamini–Hochberg are short enough to write ourselves in `app/statistics/multiple_comparison.py`, with
-tests against textbook examples, so we don't need statsmodels. **SciPy is not pinned in
-`requirements.txt` yet** (it only comes in through scikit-learn), so it needs adding with `==`.
+tests against textbook examples, so we don't need statsmodels. SciPy is pinned in `requirements.txt`.
+Bootstrap intervals and permutation p-values are in `app/statistics/resampling.py`, written with NumPy so
+that 10,000 resamples of every test run in under a minute; they are tested against SciPy and against
+published values.
 
 ## change log
 
@@ -209,3 +220,15 @@ tests against textbook examples, so we don't need statsmodels. **SciPy is not pi
 | 2026-10-31 | Stall rule: the stage also has to be below 100% at the current report | First run counted stages going 95 → 100 as stalled. That is a stage finishing, a bug in how we wrote the rule, not a threshold change. Tolerance (5 points) unchanged |
 | 2026-10-31 | Slip measured in quarters instead of months | Reports are quarterly, so a month-level slip was always off by up to 2 months |
 | 2026-10-31 | Added "timetable slip" and "stall or slip" rows and a "detected early" column to Experiment 6 | Stall alone misses grants that stop before a stage starts (0%), and some flags came at the last planned report (0 months lead). The main rule and its numbers are unchanged and still reported first |
+| 2026-11-11 | Binding number and review counts updated to 140 completed of 180 funded, 459 reviews | The synthetic corpus was regenerated after the first version; the documents still carried the old counts. The rules (30-grant limit, corrections) are unchanged |
+| 2026-11-11 | Outcome 2 is "at least one paper listed in the final report" on synthetic data | Already announced in section 6.4: nothing can be verified in OpenAlex. Every table labels it self-reported |
+| 2026-11-11 | 6.4 predictors are the 12 comparable criteria; a combined C–F mark is never divided into four | The first analysis script filled the four separate criteria with a quarter of the combined mark and left out D2. That contradicted the variant rule in this file. Results with the old script are withdrawn |
+| 2026-11-11 | Reviewer disagreement against "listed a paper" is not tested | Fewer than 5 of the two-review completed grants list no paper (the 5-grant rule in section 6.4). The main family therefore has 29 tests, not 30 |
+| 2026-11-11 | Basic versus applied uses only grants whose reviewers agree on the classification | Not specified before. With two reviewers who disagree there is no single classification to test |
+| 2026-11-11 | Budget shares rounded to a tenth of a percentage point; a share that is the same in every proposal is not tested | Three synthetic categories are a fixed share of the budget; unrounded, rounding of amounts looked like variation. 4 of the 10 planned budget tests run |
+| 2026-11-11 | Gate comparison: kappa is reported as not estimable when the gate gave one answer | Every reviewed synthetic proposal passed every gate question |
+| 2026-11-11 | Drift labels are the 50 analyst-labelled scenario sets, not `output_drift` in `papers.csv` | The scenario sets have the three classes the procedure needs; `papers.csv` has only a yes/no flag. That flag is used afterwards as an independent check of the frozen cut-offs and never to set them |
+| 2026-11-11 | Drift results reported by language pairing | Found in Experiments 3 and 4 after seeing similarities: cross-lingual pairs score lower at the same label. The cut-offs themselves were not changed after seeing results |
+| 2026-11-11 | Added an exploratory logistic regression with apparent and cross-validated AUC | Not pre-specified; reported under that heading. An earlier in-sample AUC of 0.78 was quoted without that warning |
+| 2026-11-11 | Concern extraction: threshold chosen on half the labelled comments, scored on the other half; counts reported from the better method | Not specified before |
+| 2026-11-11 | Experiment 3 baseline added: translate-then-compare with `Helsinki-NLP/opus-mt-ar-en` pinned in `models.lock`, beam search at temperature 0 | The brief asks for the baseline; no translation model was installed before. Direct comparison ranked at least as well, so Stage 4 is unchanged |
