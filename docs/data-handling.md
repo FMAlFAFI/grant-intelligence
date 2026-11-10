@@ -74,15 +74,27 @@ The table that links codes back to names is the only file that can undo the pseu
 - `data/raw/*`, `data/processed/*` and `cache/*` are git-ignored (rule 1.9). Before pushing, check
   `git status` for data files that slipped in.
 
-## things that need fixing in the repo
+## state of the repository
 
-- `data/processed/planned_timetables.csv` and `data/processed/progress_trajectories.csv` are tracked in
-  git even though `.gitignore` excludes `data/processed/*`; they were force-added. The timetable file has a
-  `researcher` column with names in it. With synthetic data that's harmless, but with real data it would
-  be a leak. It should be regenerated from the pseudonymised proposals and removed from git
-  (`git rm --cached`). It also stays in the git history, which is exactly what rule 1.9 warns about.
-- `inspect_proposals.py`, `ingestion/data_inventory.py` and `app/progress/progress_trajectories.py`
-  still default to `data/synthetic/raw`. They should point at the pseudonymised folder.
+- Every pipeline step after the pseudonymiser reads `data/processed/pseudonymised/`: the inventory, the
+  review variants, the timetables (`inspect_proposals.py`), the trajectories, the register, the
+  classifier, the portfolio map, drift, and the review and supplementary analyses. Only the
+  pseudonymiser and the synthetic generator touch the raw folder.
+- The pseudonymiser removes copies whose source form is gone, so a form withdrawn from the raw folder
+  does not stay behind in the pseudonymised one.
+- `data/processed/planned_timetables.csv` no longer has a `researcher` column. It and
+  `data/processed/progress_trajectories.csv` were once force-added to git and are now untracked. The old
+  versions stay in the git history, which is exactly what rule 1.9 warns about.
+- The capture forms (`forms/capture.py`) replace the investigator's and the reviewer's name by a code
+  before a row is written, using the same mapping. The saved rows are under `data/raw/captured/`, which
+  is not in version control.
+- The embedding cache (`cache/embeddings/`) is committed, as rule 1.5 asks, and it stores the texts
+  that were embedded: titles, keywords, abstracts, backgrounds, expected publications, paper titles and
+  comment sentences. The translation cache (`cache/translations/`) stores Arabic texts and their English
+  translations in the same way. With the synthetic corpus that is harmless. **With real records the
+  caches hold confidential text and must not be pushed to a shared remote**; keep them with the Research
+  Unit.
+- OpenAlex verification sends only DOIs and paper titles (`docs/linkage-methodology.md`).
 
 ## known limitations
 

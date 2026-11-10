@@ -1,22 +1,18 @@
-
-from pathlib import Path
+"""Step 3 of the pipeline: one row per quarterly progress report with the eight stage percentages."""
 import csv
+import logging
 import re
 
 from docx import Document
 
+from app.logging_setup import configure_logging
+from config.config import get_config
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+logger = logging.getLogger(__name__)
 
-REPORTS_DIR = (
-    PROJECT_ROOT
-    / "data"
-    / "synthetic"
-    / "raw"
-    / "progress_reports"
-)
-
-OUTPUT_DIR = PROJECT_ROOT / "data" / "processed"
+# Read the pseudonymised copies, like every step after the pseudonymiser (docs/data-handling.md)
+REPORTS_DIR = get_config().PSEUDONYMISED_DIR / "progress_reports"
+OUTPUT_DIR = get_config().PROCESSED_DIR
 OUTPUT_FILE = OUTPUT_DIR / "progress_trajectories.csv"
 
 
@@ -222,6 +218,7 @@ def process_report(path):
 
 
 def main():
+    configure_logging()
     if not REPORTS_DIR.exists():
         raise FileNotFoundError(
             f"Progress reports directory not found: {REPORTS_DIR}"
@@ -265,10 +262,8 @@ def main():
         not record["quarter"] for record in records
     )
 
-    print(f"Reports processed: {len(records)}")
-    print(f"Output saved to: {OUTPUT_FILE}")
-    print(f"Reports missing project number: {missing_project_number}")
-    print(f"Reports missing quarter: {missing_quarter}")
+    logger.info("Reports processed: %d; missing project number: %d; missing quarter: %d; wrote %s",
+                len(records), missing_project_number, missing_quarter, OUTPUT_FILE)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,29 @@
+# Keep the image small and keep local state and settings out of it.
+
+# Version control and tooling
+.git
+.gitignore
+.pytest_cache
+**/__pycache__
+*.py[cod]
+venv
+.venv
+
+# Local settings: passed in at run time by docker-compose (env_file), never baked into the image
+.env
+
+# Runtime data and outputs: these are volumes
+data
+results
+logs
+*.log
+cache/openalex
+
+# Outputs written to the repository root by the pipeline
+criteria_validity_results.csv
+supplementary_analyses_results.png
+
+# Not needed to run
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,37 @@
+{
+  "model": "Qwen/Qwen3-Embedding-0.6B@97b0c614be4d",
+  "labelled_sets": "synthetic_drift_calibration_50.csv",
+  "seed": 42,
+  "labels": {
+    "aligned": "close",
+    "partially_aligned": "partial",
+    "divergent": "distant"
+  },
+  "second_rater_sets": 0,
+  "abstract": {
+    "close_cut": 0.7922,
+    "distant_cut": 0.5148,
+    "calibration_sets": 25,
+    "calibration_kappa": 0.557,
+    "held_out_sets": 25,
+    "held_out_kappa": 0.1987,
+    "held_out_kappa_ci": [
+      -0.0246,
+      0.4201
+    ],
+    "held_out_correct": 10
+  },
+  "expected": {
+    "close_cut": 0.5756,
+    "distant_cut": 0.4976,
+    "calibration_sets": 18,
+    "calibration_kappa": 0.3712,
+    "held_out_sets": 22,
+    "held_out_kappa": 0.4054,
+    "held_out_kappa_ci": [
+      0.0909,
+      0.7027
+    ],
+    "held_out_correct": 14
+  }
+}

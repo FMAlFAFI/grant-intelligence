@@ -1,39 +1,50 @@
-"""Stage 6.1: Criterion discrimination analysis across review forms."""
+"""Stage 6.1: which criteria discriminate (mean, SD and range used per criterion)."""
 import pandas as pd
 
-MAX_SCORES = {
-    "A1": 5, "A2": 15, "A3": 10, "A4": 5, "A5": 15,
-    "B1": 3, "B2": 5, "B3C": 3, "B3D": 3, "B3E": 3, "B3F": 3,
-    "C1": 10, "D1": 5, "E1": 10, "D2": 5,
-}
+from app.review.criteria import load_rubric
+from app.statistics.confidence_intervals import wilson
+from app.statistics.resampling import clustered_mean_sd
+from config.config import get_config
 
 
-def compute_criterion_discrimination(reviews_df: pd.DataFrame) -> pd.DataFrame:
+def criterion_discrimination(reviews, rubric=None):
+    """Report mean, SD, range used and share at the maximum for every criterion, with intervals.
+
+    Args:
+        reviews: one row per review with a grant_id column and one column per criterion code
+            (app.review.tables.review_frame)
+        rubric: the rubric from app.review.criteria.load_rubric
+
+    Returns:
+        One row per criterion. The four separate C to F criteria use standard-form reviews only, and
+        the combined mark uses every review. A criterion is flagged as doing little work when its SD is
+        below LOW_SD_SHARE of its maximum or more than AT_MAX_SHARE of reviews give the maximum.
     """
-    Report mean, standard deviation, range used, and ceiling share per criterion.
-    Flags a criterion as doing little work if SD < 10% of max or >80% score at max.
-    """
+    cfg, rubric = get_config(), rubric or load_rubric()
     rows = []
-    for code, max_pts in MAX_SCORES.items():
-        if code not in reviews_df.columns:
+    for code in rubric["form_codes"] + [rubric["combined"]]:
+        if code not in reviews.columns:
             continue
-        series = reviews_df[code].dropna()
-        if series.empty:
+        scored = reviews[["grant_id", code]].dropna()
+        maximum, n = rubric["maxima"][code], len(scored)
+        basis = ("standard-form reviews" if code in rubric["separate"]
+                 else "all reviews, C to F as one mark" if code == rubric["combined"] else "all reviews")
+        row = {"criterion": code, "name": rubric["names"][code], "max_score": maximum, "reviews": n, "basis": basis}
+        if n < cfg.MIN_REVIEWS_PER_CELL:
+            rows.append({**row, "note": f"fewer than {cfg.MIN_REVIEWS_PER_CELL} reviews, not reported"})
             continue
-        mean_val = float(series.mean())
-        sd_val = float(series.std())
-        min_val, max_val = float(series.min()), float(series.max())
-        pct_at_max = float((series == max_pts).mean() * 100.0)
-        low_work = (sd_val < 0.10 * max_pts) or (pct_at_max > 80.0)
+        mean, mean_ci, sd, sd_ci = clustered_mean_sd(scored[code], scored["grant_id"])
+        at_max = int((scored[code] == maximum).sum())
+        low, high = wilson(at_max, n, cfg.CONFIDENCE_LEVEL)
         rows.append({
-            "Criterion": code,
-            "Max_Score": max_pts,
-            "Reviews_Count": len(series),
-            "Mean": round(mean_val, 2),
-            "SD": round(sd_val, 2),
-            "SD_Pct_Max": round((sd_val / max_pts) * 100.0, 1),
-            "Range_Used": f"{int(min_val)}-{int(max_val)}",
-            "Pct_At_Max": round(pct_at_max, 1),
-            "Doing_Little_Work": bool(low_work),
+            **row,
+            "mean": round(mean, 2), "mean_ci_low": round(mean_ci[0], 2), "mean_ci_high": round(mean_ci[1], 2),
+            "sd": round(sd, 2), "sd_ci_low": round(sd_ci[0], 2), "sd_ci_high": round(sd_ci[1], 2),
+            "sd_share_of_max": round(sd / maximum, 3),
+            "min_used": float(scored[code].min()), "max_used": float(scored[code].max()),
+            "at_max": at_max, "at_max_share": round(at_max / n, 3),
+            "at_max_ci_low": round(low, 3), "at_max_ci_high": round(high, 3),
+            "little_work": bool(sd < cfg.LOW_SD_SHARE * maximum or at_max / n > cfg.AT_MAX_SHARE),
+            "note": "",
         })
     return pd.DataFrame(rows)

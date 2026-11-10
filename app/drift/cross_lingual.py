@@ -1,139 +1,213 @@
-# Path: app/drift/cross_lingual.py
+"""Experiment 3: is direct Arabic-to-English comparison with the locked embedding model valid.
+
+Two frozen sets under evaluation/ are scored, each in two ways: **direct** (the Arabic text and the
+English text are embedded as they are) and **translate-then-compare** (the Arabic text is first
+translated to English with the pinned translation model, then both English texts are embedded).
+
+- 50 parallel Arabic and English sentences (evaluation/cross_lingual/parallel_pairs_50.csv): can the
+  matching sentence be found among 50 candidates.
+- the labelled drift sets with an Arabic proposal and an English publication
+  (evaluation/drift/synthetic_drift_calibration_50.csv): does similarity rank aligned sets above
+  partially aligned ones, and on what scale.
+"""
+import argparse
 import json
+import logging
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 
-LOCK_FILE = Path("models.lock")
-SAMPLES_CSV = Path("data/exp3_50_samples.csv")
-REPORT_MD = Path("docs/exp3_validation_report.md")
+from app.drift.similarity import pair_similarity
+from app.ingestion.data_inventory import table
+from app.ingestion.language_tagger import tag
+from app.logging_setup import configure_logging
+from app.statistics.confidence_intervals import rate
+from app.statistics.resampling import percentile_interval, resample_indices
+from config.config import ROOT, get_config
+
+logger = logging.getLogger(__name__)
+
+DIRECT, TRANSLATED = "direct", "translate-then-compare"
 
 
-def generate_50_samples_if_missing() -> None:
-    """
-    Generate a template dataset of 50 manual bilingual research pairs (Arabic-English)
-    if the dataset file does not already exist.
-    """
-    if SAMPLES_CSV.exists():
-        return
-    SAMPLES_CSV.parent.mkdir(parents=True, exist_ok=True)
+def retrieval(similarity):
+    """Top-1 and top-3 hits and mean reciprocal rank when row i should retrieve column i."""
+    order = np.argsort(-similarity, axis=1)
+    ranks = np.array([int(np.where(order[i] == i)[0][0]) + 1 for i in range(len(similarity))])
+    return {"n": len(ranks), "top1": int((ranks == 1).sum()), "top3": int((ranks <= 3).sum()),
+            "mrr": float(np.mean(1 / ranks))}
 
-    base_topics = [
-        ("تحليل البرمجيات الخبيثة باستخدام التعلم العميق", "Malware analysis using deep learning neural networks"),
-        ("كشف التسلل في شبكات إنترنت الأشياء", "Intrusion detection systems in IoT networks"),
-        ("الأدلة الجنائية الرقمية في الحوسبة السحابية", "Digital forensics investigation in cloud computing"),
-        ("التشفير المقاوم للحوسبة الكمومية", "Post-quantum cryptography for secure communications"),
-        ("كشف رسائل التصيد الاحتيالي عبر معالجة اللغات الطبيعية", "Phishing email detection using natural language processing"),
-        ("أمن المركبات ذاتية القيادة ضد هجمات التزييف", "Autonomous vehicle security against spoofing attacks"),
-        ("تحليل الثغرات الأمنية في العقود الذكية بلوكتشين", "Vulnerability analysis in blockchain smart contracts"),
-        ("التعرف الحيوي المتعدد لحماية الهوية الرقمية", "Multimodal biometric authentication for digital identity"),
-        ("حماية خصوصية البيانات الطبية في التعلم الفيدرالي", "Privacy-preserving medical data in federated learning"),
-        ("رصد الهجمات السيبرانية على البنية التحتية الحيوية", "Monitoring cyber attacks on critical infrastructure"),
+
+def ranking_accuracy(closer, further):
+    """Share of (closer, further) pairs of sets in which the closer one has the higher similarity."""
+    closer, further = np.asarray(closer, dtype=float), np.asarray(further, dtype=float)
+    wins = (closer[:, None] > further[None, :]).sum() + 0.5 * (closer[:, None] == further[None, :]).sum()
+    return float(wins) / (len(closer) * len(further))
+
+
+def ranking_interval(closer, further):
+    """Percentile bootstrap interval for ranking_accuracy, resampling sets within each label."""
+    closer, further = np.asarray(closer, dtype=float), np.asarray(further, dtype=float)
+    first, second = resample_indices(len(closer)), resample_indices(len(further))
+    return percentile_interval([ranking_accuracy(closer[a], further[b]) for a, b in zip(first, second)])
+
+
+def ranking_summary(aligned, partial):
+    """Ranking accuracy with its interval, and the mean similarity of each label."""
+    low, high = ranking_interval(aligned, partial)
+    return {"aligned": len(aligned), "partial": len(partial), "accuracy": ranking_accuracy(aligned, partial),
+            "low": low, "high": high, "mean_aligned": float(np.mean(aligned)), "mean_partial": float(np.mean(partial))}
+
+
+def side(gap):
+    """'below' when a cross-lingual mean is under the same-language mean, 'above' otherwise."""
+    return "below" if gap > 0 else "above"
+
+
+def render(models, sentences, retrievals, sentence_means, rankings, same_language):
+    cfg = get_config()
+    level = cfg.CONFIDENCE_LEVEL
+    direct, translated = rankings[DIRECT], rankings[TRANSLATED]
+    gap_direct, gap_translated = same_language - direct["mean_aligned"], same_language - translated["mean_aligned"]
+    out = [
+        "# experiment 3: cross-lingual similarity validity (arabic and english)",
+        "",
+        f"Generated by `python -m app.drift.cross_lingual` with the embedding model `{models['embedding']}` and the",
+        f"translation model `{models['translation']}`.",
+        "",
+        "## what was tested",
+        "",
+        "Two ways of comparing an Arabic text with an English one:",
+        "",
+        "- **direct**: both texts are embedded as they are, with the multilingual embedding model.",
+        "- **translate-then-compare** (the baseline the brief asks for): the Arabic text is translated to English",
+        "  first, with a pinned local translation model, and the two English texts are embedded.",
+        "",
+        "On two frozen sets:",
+        "",
+        f"- **Sentence retrieval.** {sentences} parallel Arabic and English sentences. They were written from a",
+        "  template of ten topics in five settings, so they are controlled test sentences, not proposals, and",
+        "  several sentences share a topic. Each sentence has to find its counterpart among the candidates.",
+        f"- **Ranking on labelled sets.** The {direct['aligned'] + direct['partial']} labelled drift sets that pair an "
+        "Arabic proposal abstract with an English",
+        "  publication title. The labels are analyst-written synthetic scenario labels",
+        "  (`docs/drift-calibration.md`). None of these sets is labelled divergent.",
+        "",
+        "## sentence retrieval",
+        "",
+        table(["Method", "Query to candidates", "Sentences", "Correct at rank 1", "Correct in the top 3",
+               "Mean reciprocal rank"],
+              [[method, direction, r["n"], rate(r["top1"], r["n"], level), rate(r["top3"], r["n"], level),
+                f"{r['mrr']:.3f}"] for method, direction, r in retrievals]),
+        "",
+        table(["Method", "Mean similarity, matching sentences", "Mean similarity, other sentences"],
+              [[method, f"{matched:.4f}", f"{unmatched:.4f}"] for method, (matched, unmatched) in sentence_means.items()]),
+        "",
+        "## ranking on labelled proposal and publication sets",
+        "",
+        f"{direct['aligned']} aligned and {direct['partial']} partially aligned sets. \"Ranked correctly\" is the share of",
+        "aligned-versus-partial comparisons in which the aligned set has the higher similarity.",
+        "",
+        table(["Method", f"Ranked correctly ({level:.0%} CI)", "Mean similarity, aligned", "Mean similarity, partially aligned"],
+              [[method, f"{r['accuracy']:.0%} ({r['low']:.0%} to {r['high']:.0%})", f"{r['mean_aligned']:.2f}",
+                f"{r['mean_partial']:.2f}"] for method, r in rankings.items()]),
+        "",
+        f"For comparison, aligned sets in which proposal and publication are both in one language score "
+        f"{same_language:.2f} on average.",
+        "",
+        "## what this means for stage 4",
+        "",
+        "- **Order.** " + (
+            "Both methods rank aligned sets above partially aligned ones equally well, so direct comparison loses "
+            "nothing in ranking." if abs(direct["accuracy"] - translated["accuracy"]) < 0.005 else
+            f"Direct comparison ranks {direct['accuracy']:.0%} of comparisons correctly and translate-then-compare "
+            f"{translated['accuracy']:.0%}."),
+        f"- **Scale.** Aligned cross-lingual sets score {direct['mean_aligned']:.2f} with direct comparison and "
+        f"{translated['mean_aligned']:.2f} with translation first;",
+        f"  same-language aligned sets score {same_language:.2f}. Direct comparison is {abs(gap_direct):.2f} "
+        f"{side(gap_direct)} that scale and translation first is {abs(gap_translated):.2f} {side(gap_translated)} it. "
+        "Neither method puts",
+        "  cross-lingual and same-language sets on one scale, so one pair of cut-offs cannot serve both.",
+        "- **Decision.** Stage 4 keeps direct comparison and reports every figure by language pairing. Translating",
+        "  first did not rank better here, and it adds a second model with its own errors (the translations are in",
+        "  `cache/translations/` and can be read). Both methods were measured on 19 labelled sets only.",
+        "",
+        "## limitations",
+        "",
+        "- Small sets: 50 template sentences and 19 labelled sets. Read the intervals.",
+        "- The ranking test has no divergent Arabic-proposal set, so it cannot show how either method treats one.",
+        "- The translation model was not evaluated on its own; a poor translation lowers the baseline, not the",
+        "  direct method.",
     ]
-
-    domains = [
-        ("في القطاع المالي", "in the financial sector"),
-        ("للمدن الذكية", "for smart cities"),
-        ("في الشبكات الصناعية", "in industrial control networks"),
-        ("للأنظمة الحكومية", "for e-government systems"),
-        ("في شبكات الجيل الخامس 5G", "in 5G telecommunications networks"),
-    ]
-
-    rows = []
-    sample_id = 1
-    for ar_topic, en_topic in base_topics:
-        for ar_dom, en_dom in domains:
-            rows.append({
-                "sample_id": sample_id,
-                "arabic_text": f"مشروع بحثي حول {ar_topic} {ar_dom} لتعزيز الأمن السيبراني.",
-                "english_text": f"A research project on {en_topic} {en_dom} to enhance cybersecurity."
-            })
-            sample_id += 1
-
-    df = pd.DataFrame(rows)
-    df.to_csv(SAMPLES_CSV, index=False, encoding="utf-8-sig")
-    print(f"Created template dataset with {len(df)} bilingual samples at {SAMPLES_CSV}")
+    return "\n".join(out) + "\n"
 
 
-def run_experiment_3() -> None:
-    """
-    Execute Experiment 3 (Cross-lingual validity) across 50 Arabic-English pairs,
-    compute cosine similarity and retrieval accuracy, and export a Markdown report.
-    """
-    generate_50_samples_if_missing()
+def main(argv=None):
+    cfg = get_config()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--parallel", type=Path,
+                        default=cfg.EVALUATION_DIR / "cross_lingual" / "parallel_pairs_50.csv")
+    parser.add_argument("--labelled", type=Path,
+                        default=cfg.EVALUATION_DIR / "drift" / "synthetic_drift_calibration_50.csv")
+    parser.add_argument("--out", default=cfg.EVALUATION_DIR / "results", type=Path)
+    parser.add_argument("--report", default=ROOT / "docs" / "exp3_validation_report.md", type=Path)
+    args = parser.parse_args(argv)
+    configure_logging()
 
-    # 1. Read the locked model revision from models.lock
-    if LOCK_FILE.exists():
-        with open(LOCK_FILE, "r", encoding="utf-8") as f:
-            lock_info = json.load(f)["embedding_model"]
-        model_id = lock_info["model_id"]
-        revision = lock_info["commit_hash"]
-    else:
-        model_id = "Qwen/Qwen3-Embedding-0.6B"
-        revision = None
+    from app.classification.embedding_classifier import LockedEncoder
+    from app.models.translation_client import LockedTranslator
 
-    print(f"Loading model: {model_id} (revision: {revision})...")
-    model = SentenceTransformer(model_id, revision=revision)
+    for path in (args.parallel, args.labelled):
+        if not path.exists():
+            raise FileNotFoundError(f"Frozen evaluation set missing: {path}")
+    encoder, translator = LockedEncoder(), LockedTranslator()
+    models = {"embedding": f"{encoder.model_name}@{encoder.revision[:12]}",
+              "translation": f"{translator.model_name}@{translator.revision[:12]}"}
 
-    # 2. Load the 50 bilingual samples
-    df = pd.read_csv(SAMPLES_CSV)
-    ar_texts = df["arabic_text"].tolist()
-    en_texts = df["english_text"].tolist()
-    n = len(df)
-    print(f"Encoding {n} Arabic texts and {n} English texts...")
+    parallel = pd.read_csv(args.parallel, encoding="utf-8-sig")
+    arabic, english = parallel["arabic_text"].tolist(), parallel["english_text"].tolist()
+    english_vectors = encoder.encode(english)
+    matrices = {DIRECT: encoder.encode(arabic) @ english_vectors.T,
+                TRANSLATED: encoder.encode(translator.translate(arabic)) @ english_vectors.T}
+    retrievals, sentence_means = [], {}
+    for method, similarity in matrices.items():
+        source = "Arabic" if method == DIRECT else "translated Arabic"
+        retrievals.append((method, f"{source} to English", retrieval(similarity)))
+        retrievals.append((method, f"English to {source}", retrieval(similarity.T)))
+        sentence_means[method] = (float(np.diag(similarity).mean()),
+                                  float(similarity[~np.eye(len(similarity), dtype=bool)].mean()))
 
-    # 3. Generate normalized vector embeddings
-    ar_embeddings = model.encode(ar_texts, normalize_embeddings=True, show_progress_bar=True)
-    en_embeddings = model.encode(en_texts, normalize_embeddings=True, show_progress_bar=True)
+    sets = pd.read_csv(args.labelled, encoding="utf-8-sig")
+    crossing = np.array([tag(a) != tag(b) for a, b in zip(sets["proposal_abstract"], sets["publication_title"])])
+    cross, same = sets[crossing].copy(), sets[~crossing].copy()
+    cross[DIRECT] = pair_similarity(encoder, cross["proposal_abstract"], cross["publication_title"])
+    cross[TRANSLATED] = pair_similarity(encoder, translator.translate(cross["proposal_abstract"].tolist()),
+                                        cross["publication_title"])
+    aligned, partial = cross["researcher_label"] == "aligned", cross["researcher_label"] == "partially_aligned"
+    if not aligned.any() or not partial.any():
+        raise ValueError("The labelled sets need aligned and partially aligned Arabic-to-English sets for this test.")
+    rankings = {method: ranking_summary(cross.loc[aligned, method].to_numpy(), cross.loc[partial, method].to_numpy())
+                for method in (DIRECT, TRANSLATED)}
+    same["similarity"] = pair_similarity(encoder, same["proposal_abstract"], same["publication_title"])
+    same_language = float(same.loc[same["researcher_label"] == "aligned", "similarity"].mean())
 
-    # 4. Compute the 50x50 Cosine Similarity Matrix
-    sim_matrix = cosine_similarity(ar_embeddings, en_embeddings)
-
-    # Similarity for matching pairs (main diagonal of the matrix)
-    positive_sims = np.diag(sim_matrix)
-
-    # Similarity for non-matching pairs (off-diagonal elements)
-    mask = ~np.eye(n, dtype=bool)
-    negative_sims = sim_matrix[mask]
-
-    # Compute Top-1 and Top-3 cross-lingual retrieval accuracy
-    top1_correct = sum(np.argmax(sim_matrix[i]) == i for i in range(n))
-    top3_correct = sum(i in np.argsort(sim_matrix[i])[-3:] for i in range(n))
-
-    top1_acc = (top1_correct / n) * 100
-    top3_acc = (top3_correct / n) * 100
-    mean_pos = float(np.mean(positive_sims))
-    std_pos = float(np.std(positive_sims))
-    mean_neg = float(np.mean(negative_sims))
-    separation_gap = mean_pos - mean_neg
-
-    # 5. Export the validation report to docs/exp3_validation_report.md
-    REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
-    report_content = f"""# Experiment 3: Cross-Lingual Validity Report (Arabic <-> English)
-
-## 1. Model Configuration
-- **Model ID:** `{model_id}`
-- **Commit Hash (Locked):** `{revision}`
-- **Sample Size:** `{n}` manual bilingual pairs (Arabic & English)
-
-## 2. Quantitative Results
-| Metric | Value |
-| :--- | :--- |
-| **Mean Cosine Similarity (Matching Pairs)** | `{mean_pos:.4f} ± {std_pos:.4f}` |
-| **Mean Cosine Similarity (Non-Matching Pairs)** | `{mean_neg:.4f}` |
-| **Discrimination Margin (Positive - Negative)** | `+{separation_gap:.4f}` |
-| **Top-1 Cross-Lingual Retrieval Accuracy** | `{top1_acc:.1f}% ({top1_correct}/{n})` |
-| **Top-3 Cross-Lingual Retrieval Accuracy** | `{top3_acc:.1f}% ({top3_correct}/{n})` |
-
-## 3. Conclusion
-The model demonstrates strong cross-lingual alignment between Arabic and English research texts, achieving a clear separation margin of `{separation_gap:.4f}` between matching and non-matching pairs.
-"""
-    REPORT_MD.write_text(report_content, encoding="utf-8")
-    print(f"\nExperiment 3 Complete! Report saved to: {REPORT_MD}")
-    print(report_content)
+    args.out.mkdir(parents=True, exist_ok=True)
+    rounded = lambda values: {k: round(v, 4) if isinstance(v, float) else v for k, v in values.items()}  # noqa: E731
+    summary = {"models": models, "parallel_sentences": len(parallel),
+               "retrieval": [{"method": method, "direction": direction, **rounded(result)}
+                             for method, direction, result in retrievals],
+               "labelled_ranking": {method: rounded(result) for method, result in rankings.items()},
+               "same_language_aligned_mean": round(same_language, 4)}
+    (args.out / "cross_lingual.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    args.report.write_text(render(models, len(parallel), retrievals, sentence_means, rankings, same_language),
+                           encoding="utf-8")
+    logger.info("Ranked correctly: direct %.0f%%, translate-then-compare %.0f%%; aligned mean %.2f direct, %.2f "
+                "translated, %.2f same language; wrote %s", 100 * rankings[DIRECT]["accuracy"],
+                100 * rankings[TRANSLATED]["accuracy"], rankings[DIRECT]["mean_aligned"],
+                rankings[TRANSLATED]["mean_aligned"], same_language, args.report.name)
+    return 0
 
 
 if __name__ == "__main__":
-    run_experiment_3()
+    raise SystemExit(main())
