@@ -4,8 +4,9 @@ import pandas as pd
 import pytest
 
 from app.models.embedding_client import load_prompt_file
-from app.review.agreement import calculate_cohens_kappa, identify_bias
-from app.review.criterion_stats import compute_criterion_discrimination
+from app.review.agreement import calculate_cohens_kappa
+from app.review.criteria import load_rubric
+from app.review.criterion_stats import criterion_discrimination
 from app.schemas.contracts import CONTRACTS, check
 from app.statistics.confidence_intervals import rate, wilson
 from app.statistics.multiple_comparison import benjamini_hochberg, holm_bonferroni
@@ -40,9 +41,20 @@ def test_versioned_prompt_loads_from_disk():
 
 def test_review_modules_and_schema_contracts():
     assert calculate_cohens_kappa([1, 2, 3, 1], [1, 2, 3, 1]) == 1.0
-    bias = identify_bias([1, 1, 1, 1], [3, 3, 3, 3])
-    assert bias["agreement_level"] == "Low"
-    df_rev = pd.DataFrame({"A1": [3, 4, 5, 2], "A2": [10, 12, 14, 8]})
-    disc = compute_criterion_discrimination(df_rev)
-    assert len(disc) == 2
+    assert calculate_cohens_kappa([1, 1, 2, 2], [1, 2, 1, 2]) == 0.0
+    reviews = pd.DataFrame({"grant_id": [f"G{i}" for i in range(6)], "A1": [3, 4, 5, 2, 5, 4],
+                            "A2": [10, 12, 14, 8, 9, 15]})
+    table = criterion_discrimination(reviews)
+    assert list(table["criterion"]) == ["A1", "A2"]
+    assert table.loc[0, "reviews"] == 6 and table.loc[0, "max_score"] == 5
+    assert table.loc[0, "mean_ci_low"] <= table.loc[0, "mean"] <= table.loc[0, "mean_ci_high"]
     assert "drift" in CONTRACTS
+
+
+def test_the_rubric_comes_from_the_configuration_file():
+    rubric = load_rubric()
+    assert len(rubric["form_codes"]) == 15
+    assert sum(rubric["maxima"][code] for code in rubric["form_codes"]) == 100
+    # C to F as one mark out of 12 gives the 12 criteria every review has
+    assert len(rubric["comparable"]) == 12 and rubric["maxima"]["B3"] == 12
+    assert not set(rubric["separate"]) & set(rubric["comparable"])

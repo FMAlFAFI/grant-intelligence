@@ -1,85 +1,87 @@
-# Path: app/review/agreement.py
+"""Stage 6.2: do the two reviewers of a proposal agree, per criterion and on the total.
+
+With two reviewers this measures agreement, not reliability: it can show that reviewers diverge on a
+criterion, never which of them was right. Every figure is an aggregate over proposals; nothing here
+describes an individual reviewer.
+"""
 import numpy as np
-import logging
+import pandas as pd
 
-logger = logging.getLogger(__name__)
+from app.review.criteria import load_rubric
+from app.statistics.confidence_intervals import wilson
+from app.statistics.resampling import cohens_kappa, kappa_interval, mean_interval, spearman, spearman_interval
+from config.config import get_config
 
-def calculate_cohens_kappa(reviewer1_scores, reviewer2_scores):
-    """
-    Calculate Cohen's Kappa to measure the inter-rater agreement between two reviewers.
-    Scores should be categorical (e.g., 1 for Reject, 2 for Revise, 3 for Accept).
-    
+LIMITATION = ("With two reviewers per proposal we measure agreement, not reliability. We can say that reviewers "
+              "diverge on a criterion, but not which one was right, because there is no third opinion.")
+
+
+def calculate_cohens_kappa(first, second):
+    """Cohen's kappa for two equally long lists of categories, rounded to four decimals."""
+    if len(first) != len(second):
+        raise ValueError("Both lists must cover the same proposals.")
+    return round(cohens_kappa(first, second), 4)
+
+
+def score_agreement(pairs, rubric=None):
+    """Spearman correlation and mean absolute difference per criterion and for the total, with intervals.
+
+    Args:
+        pairs: one row per proposal with two reviews, columns suffixed _a and _b (app.review.tables.pair_frame)
+        rubric: the rubric from app.review.criteria.load_rubric
+
     Returns:
-        float: Cohen's Kappa score (between -1 and 1).
-               <0: No agreement, 0-0.2: Slight, 0.2-0.4: Fair, 0.4-0.6: Moderate, 
-               0.6-0.8: Substantial, 0.8-1.0: Almost perfect.
+        One row per criterion. The total is reported on its own row. The four separate C to F criteria
+        use only pairs in which both reviews used the standard form.
     """
-    if len(reviewer1_scores) != len(reviewer2_scores):
-        raise ValueError("Both reviewers must have evaluated the same number of proposals.")
-        
-    if len(reviewer1_scores) == 0:
-        return 0.0
+    cfg, rubric = get_config(), rubric or load_rubric()
+    rows = []
+    for code in rubric["comparable"] + rubric["separate"] + ["total"]:
+        both = pairs[[f"{code}_a", f"{code}_b"]].dropna()
+        first, second = both[f"{code}_a"].to_numpy(float), both[f"{code}_b"].to_numpy(float)
+        maximum = rubric["maxima"].get(code, sum(rubric["maxima"][c] for c in rubric["comparable"]))
+        row = {"criterion": code, "max_score": maximum, "pairs": len(both),
+               "basis": "both reviews on the standard form" if code in rubric["separate"] else "all pairs"}
+        if len(both) < cfg.MIN_REVIEWS_PER_CELL:
+            rows.append({**row, "note": f"fewer than {cfg.MIN_REVIEWS_PER_CELL} pairs, not reported"})
+            continue
+        difference = np.abs(first - second)
+        rho_low, rho_high = spearman_interval(first, second)
+        mad_low, mad_high = mean_interval(difference)
+        rows.append({
+            **row,
+            "spearman": round(spearman(first, second), 3),
+            "spearman_ci_low": round(rho_low, 3), "spearman_ci_high": round(rho_high, 3),
+            "mean_abs_difference": round(float(difference.mean()), 2),
+            "mad_ci_low": round(mad_low, 2), "mad_ci_high": round(mad_high, 2),
+            "mad_share_of_max": round(float(difference.mean()) / maximum, 3),
+            "note": "",
+        })
+    return pd.DataFrame(rows)
 
-    r1 = np.array(reviewer1_scores)
-    r2 = np.array(reviewer2_scores)
-    
-    # 1. Calculate Observed Agreement (Po)
-    po = np.sum(r1 == r2) / len(r1)
-    
-    # 2. Calculate Expected Agreement by Chance (Pe)
-    categories = np.unique(np.concatenate((r1, r2)))
-    pe = 0.0
-    for cat in categories:
-        prob1 = np.sum(r1 == cat) / len(r1)
-        prob2 = np.sum(r2 == cat) / len(r2)
-        pe += prob1 * prob2
-        
-    # 3. Calculate Cohen's Kappa
-    # Formula: k = (Po - Pe) / (1 - Pe)
-    if pe == 1.0:
-        return 1.0 # Perfect agreement where everyone always chooses the same category
-        
-    kappa = (po - pe) / (1 - pe)
-    
-    logger.info(f"Cohen's Kappa calculated: {kappa:.4f} (Observed: {po:.2f}, Expected: {pe:.2f})")
-    return round(kappa, 4)
 
-def identify_bias(reviewer1_scores, reviewer2_scores, kappa_threshold=0.4):
+def classification_agreement(pairs):
+    """Cohen's kappa and share of pairs that agree on basic versus applied research."""
+    cfg = get_config()
+    both = pairs[["classification_a", "classification_b"]].dropna()
+    first, second = both["classification_a"].to_numpy(), both["classification_b"].to_numpy()
+    agree, n = int((first == second).sum()), len(both)
+    low, high = wilson(agree, n, cfg.CONFIDENCE_LEVEL)
+    kappa_low, kappa_high = kappa_interval(first, second) if n else (np.nan, np.nan)
+    return {"pairs": n, "agree": agree, "agree_ci_low": low, "agree_ci_high": high,
+            "kappa": cohens_kappa(first, second), "kappa_ci_low": kappa_low, "kappa_ci_high": kappa_high}
+
+
+def total_versus_criteria(pairs, rubric=None):
+    """Count pairs that agree on the total but differ on at least two criteria.
+
+    Returns:
+        pairs, agree_on_total (within TOTAL_AGREE_POINTS) and of those differ_on_criteria (two or more
+        comparable criteria at least CRITERION_DIFFER_POINTS apart)
     """
-    Analyzes the scores to flag potential biases if agreement is low.
-    """
-    kappa = calculate_cohens_kappa(reviewer1_scores, reviewer2_scores)
-    
-    result = {
-        "kappa_score": kappa,
-        "agreement_level": "Acceptable",
-        "warning": None
-    }
-    
-    if kappa < kappa_threshold:
-        result["agreement_level"] = "Low"
-        
-        # Check who is stricter
-        r1_mean = np.mean(reviewer1_scores)
-        r2_mean = np.mean(reviewer2_scores)
-        
-        if r1_mean < r2_mean:
-            result["warning"] = "Reviewer 1 is significantly stricter than Reviewer 2."
-        elif r2_mean < r1_mean:
-            result["warning"] = "Reviewer 2 is significantly stricter than Reviewer 1."
-            
-    return result
-
-# --- Test the logic ---
-if __name__ == "__main__":
-    # Example: 1=Reject, 2=Revise, 3=Accept
-    # Reviewer 1 is very strict (mostly 1s and 2s)
-    rev1 = [1, 1, 2, 1, 3, 2, 1, 1, 2, 3]
-    # Reviewer 2 is very lenient (mostly 2s and 3s)
-    rev2 = [2, 2, 3, 1, 3, 3, 2, 1, 2, 3]
-    
-    analysis = identify_bias(rev1, rev2)
-    print("Bias Analysis Results:")
-    print(f"Kappa Score: {analysis['kappa_score']}")
-    print(f"Agreement Level: {analysis['agreement_level']}")
-    print(f"Warning: {analysis['warning']}")
+    cfg, rubric = get_config(), rubric or load_rubric()
+    close = (pairs["total_a"] - pairs["total_b"]).abs() <= cfg.TOTAL_AGREE_POINTS
+    apart = sum(((pairs[f"{code}_a"] - pairs[f"{code}_b"]).abs() >= cfg.CRITERION_DIFFER_POINTS).astype(int)
+                for code in rubric["comparable"])
+    return {"pairs": len(pairs), "agree_on_total": int(close.sum()),
+            "differ_on_criteria": int((close & (apart >= 2)).sum())}

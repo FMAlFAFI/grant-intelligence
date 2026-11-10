@@ -4,6 +4,7 @@ from app.classification.embedding_classifier import (
     EmbeddingCache,
     LockedEncoder,
     ModelNotLocked,
+    ModelUnavailable,
     read_lock,
 )
 

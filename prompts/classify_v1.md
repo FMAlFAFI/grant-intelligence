@@ -7,4 +7,6 @@ fields: title, keywords, abstract, background
 drift_columns: proposal_abstract, publication_title
 default_drift_threshold: 0.55
 ---
+# Version: v1.0
+
 Encode bilingual research texts into unit-normalized 1024-d vectors and compute cosine similarity.

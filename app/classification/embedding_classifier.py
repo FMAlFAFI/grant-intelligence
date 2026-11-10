@@ -14,10 +14,14 @@ ROOT = Path(__file__).resolve().parents[2]
 LOCK_PATH = ROOT / "models.lock"
 LOCK_KEY = "embedding_model"
 CACHE_DIR = ROOT / "cache" / "embeddings"
-SEED = 42
+ENCODE_PARAMS = {"normalize_embeddings": True}
 
 
 class ModelNotLocked(RuntimeError):
+    pass
+
+
+class ModelUnavailable(RuntimeError):
     pass
 
 
@@ -34,31 +38,55 @@ def read_lock(lock_key=LOCK_KEY, lock_path=LOCK_PATH):
     return entry["model_id"], entry["commit_hash"]
 
 
+def installed_models():
+    """Model revisions in the local Hugging Face cache, named in the error when the pinned one is missing."""
+    from huggingface_hub import scan_cache_dir
+
+    try:
+        repos = scan_cache_dir().repos
+    except Exception:  # no Hugging Face cache folder on this machine yet
+        return []
+    return sorted(f"{repo.repo_id}@{revision.commit_hash[:12]}" for repo in repos for revision in repo.revisions)
+
+
 class EmbeddingCache:
-    def __init__(self, model_name, revision, cache_dir=CACHE_DIR):
-        safe = model_name.replace("/", "__")
-        self.path = Path(cache_dir) / f"{safe}@{revision[:12]}.npz"
-        self.vectors = {}
-        if self.path.exists():
+    """Vectors on disk, one file per model revision, with the texts they were computed from.
+
+    The key is the SHA-256 of the model id, its revision, the encoding parameters and the input text,
+    serialised with sorted keys, so it changes when anything that affects the vector changes (rule 1.5).
+    """
+
+    def __init__(self, model_name, revision, cache_dir=CACHE_DIR, params=None):
+        stem = f"{model_name.replace('/', '__')}@{revision[:12]}"
+        self.path = Path(cache_dir) / f"{stem}.npz"
+        self.inputs_path = Path(cache_dir) / f"{stem}.inputs.json"
+        self.identity = {"model": model_name, "revision": revision, "params": dict(params or ENCODE_PARAMS)}
+        self.vectors, self.inputs = {}, {}
+        if self.path.exists() and self.inputs_path.exists():
+            self.inputs = json.loads(self.inputs_path.read_text(encoding="utf-8"))
             with np.load(self.path) as stored:
-                self.vectors = {key: stored[key] for key in stored.files}
+                self.vectors = {key: stored[key] for key in stored.files if key in self.inputs}
         self.dirty = False
 
-    @staticmethod
-    def key(text):
-        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    def key(self, text):
+        payload = json.dumps({**self.identity, "text": text}, sort_keys=True, ensure_ascii=False)
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def get(self, text):
         return self.vectors.get(self.key(text))
 
     def put(self, text, vector):
-        self.vectors[self.key(text)] = vector
+        key = self.key(text)
+        self.vectors[key] = vector
+        self.inputs[key] = text
         self.dirty = True
 
     def save(self):
         if self.dirty:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            np.savez_compressed(self.path, **self.vectors)
+            np.savez_compressed(self.path, **{key: self.vectors[key] for key in sorted(self.vectors)})
+            self.inputs_path.write_text(
+                json.dumps(self.inputs, ensure_ascii=False, indent=0, sort_keys=True), encoding="utf-8")
             self.dirty = False
 
 
@@ -67,24 +95,36 @@ class LockedEncoder:
         import torch
         from sentence_transformers import SentenceTransformer
 
-        random.seed(SEED)
-        np.random.seed(SEED)
-        torch.manual_seed(SEED)
+        from config.config import get_config
+
+        seed = get_config().SEED
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
         self.model_name, self.revision = read_lock(lock_key, lock_path)
         self.batch_size = batch_size
-        self.model = SentenceTransformer(self.model_name, revision=self.revision, device="cpu")
+        try:
+            self.model = SentenceTransformer(self.model_name, revision=self.revision, device="cpu")
+        except Exception as exc:
+            raise ModelUnavailable(
+                f"The pinned model {self.model_name} at revision {self.revision} ({Path(lock_path).name}) could not "
+                f"be loaded: {exc}. Installed locally: {', '.join(installed_models()) or 'none'}. "
+                "Install the pinned revision with: python setup.py. No other model or revision is used instead, "
+                "because results from different weights look normal and measure a different system."
+            ) from exc
         self.cache = EmbeddingCache(self.model_name, self.revision)
         logger.info("Loaded %s at revision %s from %s", self.model_name, self.revision, Path(lock_path).name)
 
     def encode(self, texts):
-        missing = [text for text in texts if self.cache.get(text) is None]
+        missing = [text for text in dict.fromkeys(texts) if self.cache.get(text) is None]
         if missing:
-            vectors = self.model.encode(missing, batch_size=self.batch_size, normalize_embeddings=True,
-                                        show_progress_bar=len(missing) > 50, convert_to_numpy=True)
+            vectors = self.model.encode(missing, batch_size=self.batch_size, show_progress_bar=len(missing) > 50,
+                                        convert_to_numpy=True, **ENCODE_PARAMS)
             for text, vector in zip(missing, vectors):
                 self.cache.put(text, vector.astype(np.float32))
-            self.cache.save()
             logger.info("Embedded %d new texts, %d from cache", len(missing), len(texts) - len(missing))
+        self.cache.save()
         return np.vstack([self.cache.get(text) for text in texts])
 
 
