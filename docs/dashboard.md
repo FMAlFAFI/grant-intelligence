@@ -8,15 +8,15 @@ thing it works out itself is the On track / Watch / Late light.
 ## Running it
 
 ```
-pip install -r requirements.txt
-python inspect_proposals.py
-python -m app.progress.progress_trajectories
-python -m app.ingestion.pseudonymiser
-python -m app.progress.stall_report
-python -m ingestion.grant_register
-python -m classification.portfolio_map
-python -m classification.evaluate_priorities --method embedding
-streamlit run dashboard/streamlit_app.py
+python setup.py --install
+python run_dashboard.py
+```
+
+`run_dashboard.py` runs the whole pipeline first (about 9 minutes) and then starts the app. When the result
+files already exist, the app alone starts with:
+
+```
+python -m streamlit run dashboard/streamlit_app.py
 ```
 
 The app opens at http://localhost:8501. If an output is missing, the page says which
@@ -90,9 +90,29 @@ file never breaks a page: the page shows the command to run.
 | Stall episodes | Member D | `data/processed/stall_episodes.csv` (`app/progress/stall_report.py`) | ready |
 | Timetable slip | Member D | `data/processed/timetable_slip.csv` (`app/progress/stall_report.py`) | ready |
 | Extension predictions | Member D | `data/processed/extension_predictions.csv` (`app/progress/stall_report.py`) | ready |
-| Drift | Member B | `results/drift/drift_scores.csv`: `grant_id, similarity, threshold, drift_flag, n_papers` | missing |
+| Drift | Member C | `results/drift/drift_scores.csv`: `grant_id, similarity, threshold, drift_flag, n_papers`, plus `alignment`, `n_close`, `n_partial`, `n_distant`, `similarity_expected`, `pairing` (`app/drift/drift_calculator.py`) | ready |
 
 If a module produces another shape, only `adapters.py` and `contracts.py` change.
+
+## The drift page
+
+Shows the distance between each completed grant's papers and its proposal, always split by language
+pairing (same language, or Arabic proposal with English paper). The page states three things above the
+figures: that drift is a distance and not a judgement, that the papers are self-reported and not confirmed
+in OpenAlex, and how well the calibrated cut-offs agree with the labelled sets (kappa with its interval).
+The table lists grants measured as distant; a line opens the project file.
+
+## Capture forms and review analysis
+
+Four capture forms, one per institutional record (`forms/capture.py`): proposal, initial assessment,
+review (15 criteria with their maxima from `config/review_criteria.yaml`, or C to F as one mark out of 12)
+and quarterly progress report. Names are stored as pseudonym codes. Rows are saved under
+`data/raw/captured/`. The forms capture only: they compute the review total and nothing else. The Word
+tables for team, timetable, itemised budget and earlier publications are not captured.
+
+The second tab shows the result tables of `python stats_analysis.py` (criterion discrimination, reviewer
+agreement, gate comparison, validity, concerns, supplementary analyses) with the two-reviewer limitation
+and the truncation statement above the tables they apply to.
 
 ## The grant register
 
