@@ -1,53 +1,69 @@
-"""End-to-end 9-step analysis pipeline orchestrator enforcing check=True (No Silent Fallback)."""
-from pathlib import Path
+"""The analysis pipeline: every step in order, stopping at the first one that fails.
+
+    python -m app.pipeline.analysis_pipeline
+
+Each step is a separate process started with check=True, so a failing step ends the run with its own
+error instead of letting later steps work on stale output.
+"""
+import logging
 import subprocess
 import sys
 
+from app.logging_setup import configure_logging
+from config.config import ROOT, get_config
 
-def run_command(command: list[str], step_name: str) -> None:
-    """Execute a pipeline step with strict error checking (no silent fallback)."""
-    print("\n==========================================")
-    print(f"Running: {step_name}")
-    print(f"Command: {' '.join(command)}")
-    print("==========================================")
+logger = logging.getLogger(__name__)
 
+PYTHON = sys.executable
+STEPS = [
+    ("[1/9] Pseudonymise the four form types", ["-m", "app.ingestion.pseudonymiser"]),
+    ("[1/9] Data inventory and field completeness", ["-m", "app.ingestion.data_inventory"]),
+    ("[1/9] Record the review form variant of every review", ["-m", "app.ingestion.review_variants"]),
+    ("[2/9] Planned timetables from the proposals", ["inspect_proposals.py"]),
+    ("[3/9] Progress trajectories from the quarterly reports", ["-m", "app.progress.progress_trajectories"]),
+    ("[4/9] Stalls, timetable slip and extension prediction", ["-m", "app.progress.stall_report"]),
+    ("[5/9] Grant register", ["-m", "app.ingestion.grant_register"]),
+    ("[6/9] Portfolio map", ["-m", "app.classification.portfolio_map"]),
+    ("[7/9] Priority classification, keyword baseline", ["-m", "app.classification.evaluate_priorities",
+                                                         "--method", "keyword"]),
+    ("[7/9] Priority classification, embeddings", ["-m", "app.classification.evaluate_priorities",
+                                                   "--method", "embedding"]),
+    ("[8/9] Experiment 3: cross-lingual validity", ["-m", "app.drift.cross_lingual"]),
+    ("[8/9] Experiment 4: drift threshold calibration", ["-m", "app.drift.threshold_calibration"]),
+    ("[8/9] Proposal-to-output drift for the portfolio", ["-m", "app.drift.drift_calculator"]),
+    ("[9/9] Review analysis, validity and supplementary analyses", ["stats_analysis.py"]),
+]
+
+
+def run_step(name, arguments):
+    """Run one step in its own process and stop the pipeline when it fails."""
+    logger.info("Running %s: python %s", name, " ".join(arguments))
     try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"\n[ERROR] Step '{step_name}' failed with exit code {e.returncode}.")
-        print("Pipeline stopped. Dashboard will not start until errors are fixed.")
-        sys.exit(1)
+        subprocess.run([PYTHON, *arguments], check=True, cwd=ROOT)
+    except subprocess.CalledProcessError as error:
+        logger.error("Step '%s' failed with exit code %d. The pipeline stops here.", name, error.returncode)
+        raise SystemExit(1) from error
 
 
-def execute_pipeline() -> None:
-    """Run all data preparation, NLP classification, drift, progress, and statistical steps."""
-    print("Starting Grant Intelligence Pipeline Prep...")
+def ensure_synthetic_corpus():
+    """Generate the synthetic forms when the raw folder does not hold them yet."""
+    proposals = get_config().RAW_DATA_DIR / "proposals"
+    if proposals.exists() and len(list(proposals.glob("*.docx"))) >= 300:
+        return
+    seed = str(get_config().SEED)
+    run_step("[0/9] Synthetic corpus, 300 proposals",
+             ["-m", "scripts.generate_synthetic_data", "--out", "data/synthetic", "--seed", seed,
+              "--per-round", "100", "100", "100"])
+    run_step("[0/9] Synthetic corpus, hard proposals", ["-m", "scripts.generate_hard_proposals"])
 
-    proposals_dir = Path("data/synthetic/raw/proposals")
-    if not proposals_dir.exists() or len(list(proposals_dir.glob("*.docx"))) < 300:
-        run_command(
-            ["python", "-m", "scripts.generate_synthetic_data", "--out", "data/synthetic", "--seed", "42", "--per-round", "100", "100", "100"],
-            "[0a/9] Generating synthetic grant dataset (300 proposals)",
-        )
-        run_command(
-            ["python", "-m", "scripts.generate_hard_proposals"],
-            "[0b/9] Generating hard edge-case proposals",
-        )
 
-    commands = [
-        (["python", "-m", "app.ingestion.pseudonymiser"], "[1/9] Running pseudonymiser"),
-        (["python", "inspect_proposals.py"], "[2/9] Inspecting proposals"),
-        (["python", "-m", "app.progress.progress_trajectories"], "[3/9] Calculating progress trajectories"),
-        (["python", "-m", "app.progress.stall_report"], "[4/9] Generating stall report"),
-        (["python", "-m", "app.ingestion.grant_register"], "[5/9] Building grant register"),
-        (["python", "-m", "app.classification.portfolio_map"], "[6/9] Generating portfolio map"),
-        (["python", "-m", "app.classification.evaluate_priorities", "--method", "embedding"], "[7/9] Evaluating priorities (Embedding)"),
-        (["python", "-m", "app.drift.drift_calculator"], "[8/9] Calculating Semantic Drift (Qwen)"),
-        (["python", "stats_analysis.py"], "[9/9] Running Supplementary Stats & 14-Criteria Predictive Validity"),
-    ]
-
-    for cmd, name in commands:
-        run_command(cmd, name)
+def execute_pipeline():
+    """Run every step of the analysis in order."""
+    configure_logging()
+    ensure_synthetic_corpus()
+    for name, arguments in STEPS:
+        run_step(name, arguments)
+    logger.info("Pipeline finished: %d steps", len(STEPS))
 
 
 if __name__ == "__main__":

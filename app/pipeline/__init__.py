@@ -1,2 +1,1 @@
-"""Automated analysis pipeline package."""
-from app.pipeline.analysis_pipeline import execute_pipeline, run_command
+"""The analysis pipeline that runs every step in order."""

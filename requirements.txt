@@ -5,6 +5,8 @@ torch==2.14.1
 transformers==5.20.2
 sentence-transformers==6.1.0
 huggingface-hub==1.33.0
+sentencepiece==0.2.3
+sacremoses==0.2.0
 PyYAML==6.0.3
 requests==2.34.2
 python-docx==1.1.2
