@@ -1,0 +1,62 @@
+{
+  "models": {
+    "embedding": "Qwen/Qwen3-Embedding-0.6B@97b0c614be4d",
+    "translation": "Helsinki-NLP/opus-mt-ar-en@c5b2a50db78d"
+  },
+  "parallel_sentences": 50,
+  "retrieval": [
+    {
+      "method": "direct",
+      "direction": "Arabic to English",
+      "n": 50,
+      "top1": 49,
+      "top3": 50,
+      "mrr": 0.99
+    },
+    {
+      "method": "direct",
+      "direction": "English to Arabic",
+      "n": 50,
+      "top1": 50,
+      "top3": 50,
+      "mrr": 1.0
+    },
+    {
+      "method": "translate-then-compare",
+      "direction": "translated Arabic to English",
+      "n": 50,
+      "top1": 44,
+      "top3": 50,
+      "mrr": 0.9367
+    },
+    {
+      "method": "translate-then-compare",
+      "direction": "English to translated Arabic",
+      "n": 50,
+      "top1": 48,
+      "top3": 50,
+      "mrr": 0.9767
+    }
+  ],
+  "labelled_ranking": {
+    "direct": {
+      "aligned": 9,
+      "partial": 10,
+      "accuracy": 1.0,
+      "low": 1.0,
+      "high": 1.0,
+      "mean_aligned": 0.6351,
+      "mean_partial": 0.4562
+    },
+    "translate-then-compare": {
+      "aligned": 9,
+      "partial": 10,
+      "accuracy": 0.8889,
+      "low": 0.6889,
+      "high": 1.0,
+      "mean_aligned": 0.8019,
+      "mean_partial": 0.6216
+    }
+  },
+  "same_language_aligned_mean": 0.738
+}

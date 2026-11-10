@@ -5,5 +5,11 @@
         "embedding_dimension": 1024,
         "locked_at_utc": "2026-10-19T22:38:13.150753+00:00",
         "locked_by": "Fahad"
+    },
+    "translation_model": {
+        "model_id": "Helsinki-NLP/opus-mt-ar-en",
+        "commit_hash": "c5b2a50db78d6be98ae207223f8d4f63bc7a0ff1",
+        "purpose": "Arabic to English, translate-then-compare baseline of Experiment 3",
+        "locked_at_utc": "2026-11-10T22:26:31.135566+00:00"
     }
 }
