@@ -20,9 +20,9 @@ team_outputs:
     file: data/processed/planned_timetables.csv
     produced_by: python inspect_proposals.py
   drift:
-    owner: Member B
+    owner: Member C
     file: results/drift/drift_scores.csv
-    produced_by: the drift module (not on main yet)
+    produced_by: python -m app.drift.drift_calculator
   stalls:
     owner: Member D
     file: data/processed/stall_episodes.csv

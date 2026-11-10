@@ -22,8 +22,9 @@ with st.expander("How to use this dashboard", expanded=True, icon=":material/hel
 - **Alerts**: the running projects someone should check on, each with the reason in one sentence.
 - **Portfolio map**: what the proposals are about, by priority, college, round or type.
 - **Priority check**: whether each proposal really matches the priority it claims.
-- **Drift**: whether the published papers match the original proposal abstract.
-- **Submissions & Validation**: institutional proposal capture form and 14-criteria statistical validity analysis.
+- **Drift**: how far the published papers are from the original proposal, as a measured distance.
+- **Capture forms and review analysis**: the four capture forms, and whether the review criteria discriminate,
+  agree and predict outcomes.
 
 The **Filters** on the left apply to every page. Select a line in any table to open that project's file.
 """)
@@ -80,3 +81,7 @@ if cells:
         rows = rows[rows["status"] == cell["status"]]
     st.markdown(f"**{cell.get('round_name', 'All rounds')}, {cell.get('status', 'all statuses')}**")
     proposal_table(rows, "status_table", TABLE_COLUMNS)
+
+st.divider()
+st.caption("Data: synthetic corpus. Publications are self-reported in final reports; OpenAlex confirmation is not "
+           "available for synthetic DOIs, so every alignment figure rests on self-reported links only.")
