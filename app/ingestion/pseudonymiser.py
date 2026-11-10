@@ -20,6 +20,7 @@ from docx.oxml.ns import qn
 from config.config import ROOT, get_config
 from app.ingestion.data_inventory import DOC_TYPES, english
 from app.ingestion.text_extractor import PLACEHOLDERS
+from app.logging_setup import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +206,8 @@ def run(raw_dir, out_dir, mapping_path):
     mapping = Mapping(mapping_path)
     paths = [(t, p) for t in DOC_TYPES for p in sorted((Path(raw_dir) / t).glob("*.docx"))
              if not p.name.startswith("~$")]
+    if not paths:
+        raise FileNotFoundError(f"No .docx forms found under {raw_dir}")
 
     # Pass 1: give everyone a code before writing anything, so a name from one form is also
     # replaced if it turns up in the free text of another
@@ -232,9 +235,21 @@ def run(raw_dir, out_dir, mapping_path):
             flagged.append(f"{doc_type}/{path.name}")
             logger.warning("Possible name left in %s/%s", doc_type, path.name)
 
+    # Remove copies whose source form no longer exists, so later steps never read a stale file
+    sources = {(doc_type, path.name) for doc_type, path in paths}
+    pruned = 0
+    for doc_type in DOC_TYPES:
+        for copy in sorted((Path(out_dir) / doc_type).glob("*.docx")):
+            if (doc_type, copy.name) not in sources:
+                copy.unlink()
+                pruned += 1
+    if pruned:
+        logger.warning("Removed %d stale pseudonymised files that have no source form", pruned)
+
     mapping.save()
     return {"files": written, "unreadable": len(paths) - written, "new": mapping.new,
-            "researchers": mapping.count(RESEARCHER), "reviewers": mapping.count(REVIEWER), "flagged": flagged}
+            "researchers": mapping.count(RESEARCHER), "reviewers": mapping.count(REVIEWER), "flagged": flagged,
+            "pruned": pruned}
 
 
 def main(argv=None):
@@ -245,7 +260,7 @@ def main(argv=None):
     parser.add_argument("--mapping", default=cfg.PSEUDONYM_MAP_PATH, type=Path)
     args = parser.parse_args(argv)
 
-    logging.basicConfig(level=cfg.LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    configure_logging()
     summary = run(args.raw_dir, args.out, args.mapping)
     logger.info("Wrote %d files to %s (%d unreadable). %d researchers and %d reviewers in the mapping, "
                 "%d new this run. %d files with possible leftover names.",

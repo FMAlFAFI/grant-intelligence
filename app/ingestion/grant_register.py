@@ -10,6 +10,8 @@ import pandas as pd
 from app.classification.portfolio_map import canonical, load_name_map
 from app.ingestion.extension_check import extension_status
 from app.ingestion.text_extractor import extract_lines
+from app.logging_setup import configure_logging
+from config.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -206,11 +208,12 @@ def build_register(raw_dir, history=None):
 
 
 def main(argv=None):
+    cfg = get_config()
     parser = argparse.ArgumentParser(description="Build the grant register (one row per grant) from the Word forms.")
-    parser.add_argument("--raw", default="data/synthetic/raw")
-    parser.add_argument("--out", default="results/register")
+    parser.add_argument("--raw", default=str(cfg.PSEUDONYMISED_DIR))
+    parser.add_argument("--out", default=str(cfg.RESULTS_DIR / "register"))
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    configure_logging()
 
     history = build_progress_history(args.raw)
     register = build_register(args.raw, history)

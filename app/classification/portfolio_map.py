@@ -9,6 +9,8 @@ import yaml
 from app.classification import embedding_classifier
 from app.classification.keyword_classifier import UNKNOWN, claimed_priority, classify, load_priorities, normalize, proposal_fields
 from app.ingestion.text_extractor import extract_lines
+from app.logging_setup import configure_logging
+from config.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -156,14 +158,15 @@ def bar_chart(table, title, total, path):
 
 
 def main(argv=None):
+    cfg = get_config()
     parser = argparse.ArgumentParser(description="Portfolio map: counts by round, type, college, department and priority.")
-    parser.add_argument("--raw", default="data/synthetic/raw")
-    parser.add_argument("--out", default="results/portfolio_map")
+    parser.add_argument("--raw", default=str(cfg.PSEUDONYMISED_DIR))
+    parser.add_argument("--out", default=str(cfg.RESULTS_DIR / "portfolio_map"))
     parser.add_argument("--method", choices=METHODS, default="embedding",
                         help="How to find the priority from the text: the team embedding model or the keyword list")
     parser.add_argument("--no-charts", action="store_true")
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    configure_logging()
 
     frame = build_portfolio(args.raw, args.method)
     out = Path(args.out)
