@@ -1,0 +1,45 @@
+# Grant Intelligence in a container.
+#
+#   0. cp .env.example .env                                   (or: python setup.py)
+#   1. docker compose up --build                              dashboard at http://localhost:8501
+#   2. docker compose --profile pipeline run --rm pipeline    run the analysis once to fill the dashboard
+#
+# Step 2 generates the synthetic corpus, downloads the two pinned models (about 1.5 GB, kept in the
+# model-cache volume) and runs the 14 pipeline steps. The dashboard shows which outputs are missing
+# until it has run.
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: grant-intelligence:latest
+  env_file:
+    - .env
+  environment:
+    # Container path of the pseudonym mapping: in its own volume, outside the application folder
+    PSEUDONYM_MAP_PATH: /home/app/grant-intelligence-private/pseudonym_map.csv
+  volumes:
+    - data:/app/data
+    - results:/app/results
+    - logs:/app/logs
+    - model-cache:/home/app/.cache/huggingface
+    - private:/home/app/grant-intelligence-private
+
+services:
+  dashboard:
+    <<: *app
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+  pipeline:
+    <<: *app
+    profiles: ["pipeline"]
+    command: ["python", "-m", "app.pipeline.analysis_pipeline"]
+
+volumes:
+  data:
+  results:
+  logs:
+  model-cache:
+  private:
