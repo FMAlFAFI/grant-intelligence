@@ -33,7 +33,7 @@ pages = {
         st.Page("views/portfolio.py", title="Portfolio map", icon=":material/bar_chart:"),
         st.Page("views/priority_check.py", title="Priority check", icon=":material/rule:"),
         st.Page("views/drift.py", title=section_title("Drift", drift), icon=":material/compare_arrows:"),
-        st.Page("views/submission.py", title="Submissions & Validation", icon=":material/assignment_add:"),
+        st.Page("views/submission.py", title="Capture forms & review analysis", icon=":material/assignment_add:"),
     ],
 }
 navigation = st.navigation(pages)

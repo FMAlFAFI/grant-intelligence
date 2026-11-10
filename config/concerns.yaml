@@ -1,0 +1,70 @@
+version: 1
+
+# Concern types looked for in reviewer comments (brief section 6.5).
+# keywords_*      the rule-based baseline: a comment has the concern when it contains one of them
+# description_*   what the embedding method compares each sentence of a comment with
+# criterion       the rubric criterion the concern belongs to (codes from review_criteria.yaml)
+# answer_key_id   the id of this concern in the synthetic generator's answer key, used for scoring only
+concerns:
+  - id: sample_size
+    name: Sample too small or not justified
+    criterion: B3C
+    answer_key_id: 0
+    description_en: "The sample is too small or the sampling does not support the conclusions."
+    description_ar: "العينة صغيرة أو أن اختيارها لا يدعم النتائج."
+    keywords_en: [sample]
+    keywords_ar: [العينة]
+
+  - id: timetable
+    name: Timetable unrealistic
+    criterion: B2
+    answer_key_id: 1
+    description_en: "The schedule or time plan is not realistic for the planned work."
+    description_ar: "الخطة الزمنية غير واقعية للعمل المخطط."
+    keywords_en: [timetable, timeline, schedule]
+    keywords_ar: [الجدول الزمني, الخطة الزمنية]
+
+  - id: equipment_budget
+    name: Equipment budget not justified
+    criterion: E1
+    answer_key_id: 2
+    description_en: "The cost of equipment in the budget is not explained or justified."
+    description_ar: "تكلفة الأجهزة في الميزانية غير موضحة أو غير مبررة."
+    keywords_en: [equipment]
+    keywords_ar: [الأجهزة]
+
+  - id: recent_sources
+    name: Recent sources missing
+    criterion: A5
+    answer_key_id: 3
+    description_en: "The literature review does not cite recent references."
+    description_ar: "مراجعة الأدبيات لا تستشهد بمراجع حديثة."
+    keywords_en: [recent sources, recent references, literature]
+    keywords_ar: [مصادر حديثة, مراجع حديثة]
+
+  - id: ethics
+    name: Ethical approval not described
+    criterion: B3F
+    answer_key_id: 4
+    description_en: "The ethics approval process for the study is not explained."
+    description_ar: "إجراءات الحصول على الموافقة الأخلاقية للدراسة غير موضحة."
+    keywords_en: [ethical, ethics]
+    keywords_ar: [الأخلاقية, الأخلاقيات]
+
+  - id: publications_link
+    name: Expected publications not linked to objectives
+    criterion: C1
+    answer_key_id: 5
+    description_en: "The planned papers do not follow from the aims of the proposal."
+    description_ar: "الأوراق العلمية المخطط لها لا ترتبط بأهداف المقترح."
+    keywords_en: [publications, papers]
+    keywords_ar: [الأوراق]
+
+  - id: statistics_expertise
+    name: Team lacks statistical expertise
+    criterion: D1
+    answer_key_id: 6
+    description_en: "Nobody in the research team has the statistics skills the analysis needs."
+    description_ar: "لا يوجد في الفريق البحثي من يملك مهارات الإحصاء اللازمة للتحليل."
+    keywords_en: [statistical expertise, statistician]
+    keywords_ar: [الإحصاء]
