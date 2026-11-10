@@ -5,6 +5,7 @@ from pathlib import Path
 
 from docx import Document
 from docx.oxml.ns import qn
+from app.logging_setup import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +180,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Extract text from Word forms in document order.")
     parser.add_argument("paths", nargs="+", type=Path)
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO)
+    configure_logging()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     for path in args.paths:

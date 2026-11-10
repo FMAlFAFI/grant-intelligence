@@ -3,26 +3,32 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
 
-# Data & Logs (Rule 1.9)
+# Environment (the template .env.example is committed, the real file is not)
+.env
+
+# Data and logs (rule 1.9)
 *.csv
-!data/**/*.csv
+*.log
+logs/
+data/*
+!data/raw/
+!data/processed/
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-data/
-*.csv
-*.log
 
-# Models & Cache (Rule 1.5 & 1.9)
+# Run outputs: produced by the pipeline, never committed
+/results/
+/supplementary_analyses_results.png
+
+# Labelled evaluation sets and the results computed from them are evidence, so they are committed
+!evaluation/**/*.csv
+
+# Caches (rule 1.9), except the evaluation cache of model calls, which rule 1.5 says to commit
 cache/*
 !cache/.gitkeep
-models/*
-!models/.gitkeep
-
-# Environment
-.env
-
-# Run outputs
-results/
+!cache/embeddings/
+!cache/translations/

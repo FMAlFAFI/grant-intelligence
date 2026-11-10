@@ -4,6 +4,7 @@ from collections import Counter
 from pathlib import Path
 
 from app.ingestion.text_extractor import extract_lines
+from app.logging_setup import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def extension_status(raw_dir):
 if __name__ == "__main__":
     import sys
 
-    logging.basicConfig(level=logging.INFO)
+    configure_logging()
     result = extension_status(sys.argv[1] if len(sys.argv) > 1 else "data/synthetic/raw")
     counts = Counter(result.values())
     for label, n in sorted(counts.items()):
