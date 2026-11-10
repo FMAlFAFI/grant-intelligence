@@ -12,9 +12,13 @@ venv
 # Local settings: passed in at run time by docker-compose (env_file), never baked into the image
 .env
 
-# Runtime data and outputs: these are volumes
-data
-results
+# Data: the image carries only what the dashboard reads (data/processed, about 90 MB, and results/),
+# so it is populated even without the bind mounts of docker-compose.yml. The raw corpus, the
+# generator's answer key, quarantined files and rows saved by the capture forms stay out.
+data/*
+!data/processed
+
+# Logs and the cache of external lookups
 logs
 *.log
 cache/openalex

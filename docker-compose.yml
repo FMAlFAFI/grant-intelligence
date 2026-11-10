@@ -1,12 +1,14 @@
 # Grant Intelligence in a container.
 #
-#   0. cp .env.example .env                                   (or: python setup.py)
-#   1. docker compose up --build                              dashboard at http://localhost:8501
-#   2. docker compose --profile pipeline run --rm pipeline    run the analysis once to fill the dashboard
+#   docker compose up --build        dashboard at http://localhost:8501
 #
-# Step 2 generates the synthetic corpus, downloads the two pinned models (about 1.5 GB, kept in the
-# model-cache volume) and runs the 14 pipeline steps. The dashboard shows which outputs are missing
-# until it has run.
+# The dashboard shows the outputs that are already in ./data and ./results next to this file, so with
+# the pre-generated outputs in place it is populated as soon as it starts. Without them the pages say
+# which outputs are missing; `docker compose --profile pipeline run --rm pipeline` produces them (it
+# generates the synthetic corpus, downloads the two pinned models, about 1.5 GB, and runs the 14 steps).
+#
+# Settings come from .env when the file exists (copy .env.example to create it). Without it the
+# defaults in config/config.py apply. The optional form below needs Docker Compose 2.24 or newer.
 
 x-app: &app
   build:
@@ -14,13 +16,17 @@ x-app: &app
     dockerfile: Dockerfile
   image: grant-intelligence:latest
   env_file:
-    - .env
+    - path: .env
+      required: false
   environment:
     # Container path of the pseudonym mapping: in its own volume, outside the application folder
     PSEUDONYM_MAP_PATH: /home/app/grant-intelligence-private/pseudonym_map.csv
   volumes:
-    - data:/app/data
-    - results:/app/results
+    # Pre-generated outputs and caches from the host folder, so nothing has to be computed first
+    - ./data:/app/data
+    - ./results:/app/results
+    - ./cache:/app/cache
+    # Kept by Docker: logs, downloaded models, and the pseudonym mapping (never inside the repository)
     - logs:/app/logs
     - model-cache:/home/app/.cache/huggingface
     - private:/home/app/grant-intelligence-private
@@ -38,8 +44,6 @@ services:
     command: ["python", "-m", "app.pipeline.analysis_pipeline"]
 
 volumes:
-  data:
-  results:
   logs:
   model-cache:
   private:
