@@ -1,2 +1,1 @@
-"""Semantic drift and cross-lingual validation package."""
-from app.drift.drift_calculator import calculate_drift
+"""Proposal-to-output drift: similarity, threshold calibration and cross-lingual validation."""
