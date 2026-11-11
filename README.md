@@ -98,24 +98,27 @@ Run every command from the repository root. Each step is followed by how to chec
 
 ## run in a container
 
-Instead of steps 2 to 5, with Docker installed:
+Instead of steps 2 to 5, with Docker installed (Docker Compose 2.24 or newer):
 
-0. `cp .env.example .env`
+0. `docker compose up --build`
 
-   Check: `docker compose config` prints the resolved configuration without an error.
+   Check: `docker compose ps` shows `dashboard` as `healthy`, and `http://localhost:8501` opens.
 
-1. `docker compose up --build`
+The container reads `./data`, `./results` and `./cache` from the folder it is started in. When the
+pre-generated outputs are there (for example in a submission archive that includes `data/processed` and
+`results`), every page is populated straight away and nothing has to be computed. The image also carries
+`data/processed` and `results` if they were present when it was built.
 
-   Check: `docker compose ps` shows `dashboard` as `healthy`, and `http://localhost:8501` opens. The pages
-   say which outputs are missing until the next step has run.
+In a plain clone those folders are empty and the pages say which outputs are missing. Produce them with:
 
-2. `docker compose --profile pipeline run --rm pipeline`
+1. `docker compose --profile pipeline run --rm pipeline`
 
    Check: the last log line is `Pipeline finished: 14 steps`; reload the dashboard. The first run downloads
    the two pinned models (1.5 GB) into a volume.
 
-Data, results, logs, the model cache and the pseudonym mapping are named volumes, so they survive a
-rebuild. The container files have been checked for syntax but not yet built (`docs/handover-memo.md`).
+Settings come from `.env` when the file exists (`cp .env.example .env`); otherwise the defaults apply.
+Logs, the model cache and the pseudonym mapping are Docker volumes. The container files have been checked
+for syntax but not yet built (`docs/handover-memo.md`).
 
 ## run one part
 

@@ -78,8 +78,12 @@ is the command-line entry point. `cache/` sits at the repository root rather tha
 
 `Dockerfile` and `docker-compose.yml` are in the repository root (the standard layout puts them in
 `docker/`). The image is `python:3.11.9-slim` with the pinned packages and the application code; it runs
-the dashboard as an unprivileged user on port 8501. Nothing that changes at run time is in the image:
-`data/`, `results/`, `logs/`, the model cache and the pseudonym mapping are named volumes, and settings
-come from `.env` through `env_file`. The mapping volume is mounted under the user's home folder, so it
-stays outside the application folder, as `docs/data-handling.md` requires. The same image runs the
+the dashboard as an unprivileged user on port 8501. `docker-compose.yml` mounts `./data`, `./results` and
+`./cache` from the host folder, so a checkout or archive that already holds the pipeline outputs shows a
+populated dashboard at once; the image also carries `data/processed` and `results` when they exist at
+build time. The raw corpus is never in the image. Logs, the model cache and the pseudonym mapping are
+named volumes, and settings come from `.env` through `env_file` when the file exists. The mapping volume
+is mounted under the user's home folder, so it stays outside the application folder, as
+`docs/data-handling.md` requires. On a Linux host the mounted folders have to be readable by user id 1000,
+and writable for the capture forms or the pipeline. The same image runs the
 pipeline as a one-off service: `docker compose --profile pipeline run --rm pipeline`.

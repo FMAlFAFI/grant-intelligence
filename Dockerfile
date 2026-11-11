@@ -20,10 +20,11 @@ RUN useradd --create-home --uid 1000 app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
 
-# Application code. Data, results, logs and .env are kept out by .dockerignore.
+# Application code, plus the pre-generated outputs the dashboard reads (data/processed, results) when
+# they are present at build time. The raw corpus, logs and .env are kept out by .dockerignore.
 COPY --chown=app:app . .
 
-# Folders that are mounted as volumes at run time, owned by the application user, who also has to be
+# Folders that docker-compose mounts at run time, owned by the application user, who also has to be
 # able to write new files in /app. The pseudonym mapping and the model cache live under the home
 # folder, outside the application folder.
 RUN mkdir -p data/raw data/processed results logs \
