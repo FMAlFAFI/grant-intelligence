@@ -195,7 +195,7 @@ Synthetic corpus, seed 42, `Qwen/Qwen3-Embedding-0.6B` at commit `97b0c614be4d`,
 | Prior publications, budget composition | no relation after correction | 2 and 4 tests |
 | Concern extraction, macro-F1 | keywords 1.00, embeddings 0.86, both languages | 230 held-out comments built from fixed sentences |
 | Reproducibility | a second run gives byte-identical result files and computes no embedding | |
-| Pipeline run time | 8 min 39 s for 14 steps | laptop CPU, warm cache |
+| Pipeline run time | 9 min 33 s for 14 steps in the final timed run (8 min 38 s and 8 min 39 s in earlier runs) | laptop CPU, warm cache |
 | Tests | 146 passed | after a pipeline run |
 
 ## clean-clone test
