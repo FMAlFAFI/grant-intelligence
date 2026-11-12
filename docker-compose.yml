@@ -7,8 +7,9 @@
 # which outputs are missing; `docker compose --profile pipeline run --rm pipeline` produces them (it
 # generates the synthetic corpus, downloads the two pinned models, about 1.5 GB, and runs the 14 steps).
 #
-# Settings come from .env when the file exists (copy .env.example to create it). Without it the
-# defaults in config/config.py apply. The optional form below needs Docker Compose 2.24 or newer.
+# Settings come from .env, which has to exist next to this file: `cp .env.example .env` (the submission
+# archive already contains it). The plain env_file form below works with Docker Compose v2 and with the
+# legacy docker-compose v1.
 
 x-app: &app
   build:
@@ -16,8 +17,7 @@ x-app: &app
     dockerfile: Dockerfile
   image: grant-intelligence:latest
   env_file:
-    - path: .env
-      required: false
+    - .env
   environment:
     # Container path of the pseudonym mapping: in its own volume, outside the application folder
     PSEUDONYM_MAP_PATH: /home/app/grant-intelligence-private/pseudonym_map.csv

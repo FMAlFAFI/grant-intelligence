@@ -82,7 +82,8 @@ the dashboard as an unprivileged user on port 8501. `docker-compose.yml` mounts 
 `./cache` from the host folder, so a checkout or archive that already holds the pipeline outputs shows a
 populated dashboard at once; the image also carries `data/processed` and `results` when they exist at
 build time. The raw corpus is never in the image. Logs, the model cache and the pseudonym mapping are
-named volumes, and settings come from `.env` through `env_file` when the file exists. The mapping volume
+named volumes, and settings come from `.env` through `env_file` (the plain form, which the legacy
+docker-compose v1 also reads, so the file has to exist). The mapping volume
 is mounted under the user's home folder, so it stays outside the application folder, as
 `docs/data-handling.md` requires. On a Linux host the mounted folders have to be readable by user id 1000,
 and writable for the capture forms or the pipeline. The same image runs the
