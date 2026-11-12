@@ -98,9 +98,13 @@ Run every command from the repository root. Each step is followed by how to chec
 
 ## run in a container
 
-Instead of steps 2 to 5, with Docker installed (Docker Compose 2.24 or newer):
+Instead of steps 2 to 5, with Docker installed (Docker Compose v2, or the legacy `docker-compose` v1):
 
-0. `docker compose up --build`
+0. `cp .env.example .env` (not needed with the submission archive, which already contains `.env`)
+
+   Check: `docker compose config` prints the resolved configuration without an error.
+
+1. `docker compose up --build`
 
    Check: `docker compose ps` shows `dashboard` as `healthy`, and `http://localhost:8501` opens.
 
@@ -111,14 +115,13 @@ pre-generated outputs are there (for example in a submission archive that includ
 
 In a plain clone those folders are empty and the pages say which outputs are missing. Produce them with:
 
-1. `docker compose --profile pipeline run --rm pipeline`
+2. `docker compose --profile pipeline run --rm pipeline`
 
    Check: the last log line is `Pipeline finished: 14 steps`; reload the dashboard. The first run downloads
    the two pinned models (1.5 GB) into a volume.
 
-Settings come from `.env` when the file exists (`cp .env.example .env`); otherwise the defaults apply.
-Logs, the model cache and the pseudonym mapping are Docker volumes. The container files have been checked
-for syntax but not yet built (`docs/handover-memo.md`).
+Settings come from `.env`. Logs, the model cache and the pseudonym mapping are Docker volumes. The
+container files have been checked for syntax but not yet built (`docs/handover-memo.md`).
 
 ## run one part
 

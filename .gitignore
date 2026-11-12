@@ -20,6 +20,10 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
+# The submission archive and Office lock files
+/Grant_Intelligence_Final_Submission.zip
+~$*
+
 # Run outputs: produced by the pipeline, never committed
 /results/
 /supplementary_analyses_results.png
