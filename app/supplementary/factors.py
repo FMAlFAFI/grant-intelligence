@@ -18,8 +18,8 @@ def export_supplementary_chart(table, out_path):
               ("share_equipment", "Equipment share of the requested budget")]
     for axis, (column, label) in zip(axes, panels):
         sns.boxplot(x="on_time", y=column, hue="on_time", data=table, ax=axis, palette="Set2", legend=False)
-        axis.set_title(f"{label}, by outcome (n = {len(table)} completed grants)")
-        axis.set_xlabel("0 = extended, 1 = completed without extension")
+        axis.set_title(label)
+        axis.set_xlabel(f"0 = extended, 1 = completed without extension (n = {len(table)} completed grants)")
         axis.set_ylabel(label)
     figure.tight_layout()
     figure.savefig(out_path, dpi=300)
