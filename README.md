@@ -96,6 +96,12 @@ Run every command from the repository root. Each step is followed by how to chec
    pseudonymising), then the dashboard opens at `http://localhost:8501`. Running `python -m pytest -q`
    again now reports `146 passed`.
 
+Running `python -m pytest -q` on a clean folder, before the data is generated and the pipeline has run,
+reports passed and skipped tests and no failure (`118 passed, 28 skipped` in a fresh clone). A skipped
+test only needs the synthetic corpus or the pipeline output. All 146 tests pass after
+`python run_dashboard.py`; the submission archive already holds that output, so they pass there straight
+away.
+
 ## run in a container
 
 Instead of steps 2 to 5, with Docker installed (Docker Compose v2, or the legacy `docker-compose` v1):
